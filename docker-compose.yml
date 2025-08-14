@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: campusconnect_postgres
+    environment:
+      POSTGRES_DB: campusconnect_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - campusconnect
+
+  redis:
+    image: redis:7-alpine
+    container_name: campusconnect_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - campusconnect
+
+  minio:
+    image: minio/minio:latest
+    container_name: campusconnect_minio
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - campusconnect
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: campusconnect_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - campusconnect
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: campusconnect_server
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: postgres://postgres:postgres123@postgres:5432/campusconnect_dev
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_REFRESH_SECRET: your-super-secret-refresh-key-change-in-production
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: password123
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - mailhog
+    networks:
+      - campusconnect
+    develop:
+      watch:
+        - action: sync
+          path: ./server
+          target: /app
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: campusconnect_client
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+      REACT_APP_WS_URL: ws://localhost:5000
+      CHOKIDAR_USEPOLLING: true
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    networks:
+      - campusconnect
+    develop:
+      watch:
+        - action: sync
+          path: ./client/src
+          target: /app/src
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  campusconnect:
+    driver: bridge
