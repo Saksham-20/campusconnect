@@ -1,0 +1,96 @@
+// server/src/routes/users.js
+const express = require('express');
+const { body } = require('express-validator');
+const { authenticateToken } = require('../middleware/auth');
+const { requireRole, requireOwnership } = require('../middleware/rbac');
+const userController = require('../controllers/userController');
+
+const router = express.Router();
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/profile', authenticateToken, userController.getProfile);
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/profile', 
+  authenticateToken,
+  [
+    body('firstName').optional().trim().isLength({ min: 1, max: 100 }),
+    body('lastName').optional().trim().isLength({ min: 1, max: 100 }),
+    body('phone').optional().matches(/^[\+]?[1-9][\d]{0,15}$/)
+  ],
+  userController.updateProfile
+);
+
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Get all users (admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/', 
+  authenticateToken, 
+  requireRole('admin', 'tpo'), 
+  userController.getAllUsers
+);
+
+/**
+ * @swagger
+ * /api/users/role/{role}:
+ *   get:
+ *     summary: Get users by role
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/role/:role', 
+  authenticateToken, 
+  requireRole('admin', 'tpo', 'recruiter'), 
+  userController.getUsersByRole
+);
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/:id', authenticateToken, userController.getProfile);
+
+/**
+ * @swagger
+ * /api/users/{id}/status:
+ *   patch:
+ *     summary: Toggle user status
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.patch('/:id/status', 
+  authenticateToken, 
+  requireRole('admin'), 
+  userController.toggleUserStatus
+);
+
+module.exports = router;
