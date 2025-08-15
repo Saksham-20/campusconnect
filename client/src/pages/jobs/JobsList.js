@@ -10,6 +10,7 @@ import {
   MapPinIcon,
   CurrencyDollarIcon,
   CalendarIcon,
+  BriefcaseIcon,
   BuildingOfficeIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';

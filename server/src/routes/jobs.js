@@ -39,11 +39,28 @@ router.post('/',
 
 /**
  * @swagger
+ * /api/jobs/recommended:
+ *   get:
+ *     summary: Get recommended jobs for student
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ */
+// Move recommended route BEFORE :id route to prevent "recommended" being treated as an ID
+router.get('/recommended', 
+  authenticateToken, 
+  requireRole('student'), 
+  jobController.getRecommendedJobs
+);
+
+/**
+ * @swagger
  * /api/jobs/{id}:
  *   get:
  *     summary: Get job by ID
  *     tags: [Jobs]
  */
+// Move this route AFTER specific routes like /recommended
 router.get('/:id', optionalAuth, jobController.getJobById);
 
 /**
@@ -74,21 +91,6 @@ router.patch('/:id/status',
   authenticateToken, 
   requireRole('recruiter', 'tpo', 'admin'),
   jobController.toggleJobStatus
-);
-
-/**
- * @swagger
- * /api/jobs/recommended:
- *   get:
- *     summary: Get recommended jobs for student
- *     tags: [Jobs]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/recommended', 
-  authenticateToken, 
-  requireRole('student'), 
-  jobController.getRecommendedJobs
 );
 
 module.exports = router;

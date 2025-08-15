@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext'; // Add useAuth import here
 import { NotificationProvider } from './contexts/NotificationContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Header from './components/common/Header';
@@ -23,6 +23,26 @@ import Applications from './pages/applications/Applications';
 import Events from './pages/events/Events';
 
 import './styles/index.css';
+
+// Dashboard router component to redirect based on user role
+const DashboardRouter = () => {
+  const { user } = useAuth();
+  
+  if (!user) return <Navigate to="/login" replace />;
+  
+  switch (user.role) {
+    case 'student':
+      return <StudentDashboard />;
+    case 'recruiter':
+      return <RecruiterDashboard />;
+    case 'tpo':
+      return <TPODashboard />;
+    case 'admin':
+      return <AdminDashboard />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
+};
 
 function App() {
   return (
@@ -112,25 +132,5 @@ function App() {
     </AuthProvider>
   );
 }
-
-// Dashboard router component to redirect based on user role
-const DashboardRouter = () => {
-  const { user } = useAuth();
-  
-  if (!user) return <Navigate to="/login" replace />;
-  
-  switch (user.role) {
-    case 'student':
-      return <StudentDashboard />;
-    case 'recruiter':
-      return <RecruiterDashboard />;
-    case 'tpo':
-      return <TPODashboard />;
-    case 'admin':
-      return <AdminDashboard />;
-    default:
-      return <Navigate to="/login" replace />;
-  }
-};
 
 export default App;

@@ -1,5 +1,6 @@
 // server/src/controllers/notificationController.js
 const { Notification } = require('../models');
+const { Op } = require('sequelize'); // Add this import
 
 class NotificationController {
   async getNotifications(req, res, next) {

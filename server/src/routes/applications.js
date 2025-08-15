@@ -40,44 +40,15 @@ router.post('/',
 
 /**
  * @swagger
- * /api/applications/{id}:
+ * /api/applications/stats:
  *   get:
- *     summary: Get application by ID
+ *     summary: Get application statistics
  *     tags: [Applications]
  *     security:
  *       - bearerAuth: []
  */
-router.get('/:id', authenticateToken, applicationController.getApplicationById);
-
-/**
- * @swagger
- * /api/applications/{id}/status:
- *   patch:
- *     summary: Update application status
- *     tags: [Applications]
- *     security:
- *       - bearerAuth: []
- */
-router.patch('/:id/status', 
-  authenticateToken, 
-  requireRole('recruiter', 'tpo', 'admin'),
-  applicationController.updateApplicationStatus
-);
-
-/**
- * @swagger
- * /api/applications/{id}/withdraw:
- *   patch:
- *     summary: Withdraw application
- *     tags: [Applications]
- *     security:
- *       - bearerAuth: []
- */
-router.patch('/:id/withdraw', 
-  authenticateToken, 
-  requireRole('student'),
-  applicationController.withdrawApplication
-);
+// Move stats route BEFORE the :id route to prevent "stats" being interpreted as an ID
+router.get('/stats', authenticateToken, applicationController.getApplicationStats);
 
 /**
  * @swagger
@@ -111,13 +82,44 @@ router.get('/job/:jobId',
 
 /**
  * @swagger
- * /api/applications/stats:
+ * /api/applications/{id}:
  *   get:
- *     summary: Get application statistics
+ *     summary: Get application by ID
  *     tags: [Applications]
  *     security:
  *       - bearerAuth: []
  */
-router.get('/stats', authenticateToken, applicationController.getApplicationStats);
+// Move this route AFTER specific routes to prevent conflicts
+router.get('/:id', authenticateToken, applicationController.getApplicationById);
+
+/**
+ * @swagger
+ * /api/applications/{id}/status:
+ *   patch:
+ *     summary: Update application status
+ *     tags: [Applications]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.patch('/:id/status', 
+  authenticateToken, 
+  requireRole('recruiter', 'tpo', 'admin'),
+  applicationController.updateApplicationStatus
+);
+
+/**
+ * @swagger
+ * /api/applications/{id}/withdraw:
+ *   patch:
+ *     summary: Withdraw application
+ *     tags: [Applications]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.patch('/:id/withdraw', 
+  authenticateToken, 
+  requireRole('student'),
+  applicationController.withdrawApplication
+);
 
 module.exports = router;
