@@ -44,7 +44,17 @@ module.exports = (sequelize, DataTypes) => {
     phone: {
       type: DataTypes.STRING(20),
       validate: {
-        is: /^[\+]?[1-9][\d]{0,15}$/
+        // Custom validator to allow empty strings or null values
+        isValidPhone(value) {
+          // Allow null, undefined, or empty string
+          if (!value || value === '') {
+            return;
+          }
+          // If value exists, validate with regex
+          if (!/^[\+]?[1-9][\d]{0,15}$/.test(value)) {
+            throw new Error('Phone number format is invalid');
+          }
+        }
       }
     },
     profilePicture: {
@@ -76,7 +86,21 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     tableName: 'users',
     underscored: true,
-    timestamps: true
+    timestamps: true,
+    hooks: {
+      beforeCreate: (user) => {
+        // Convert empty string to null for phone
+        if (user.phone === '') {
+          user.phone = null;
+        }
+      },
+      beforeUpdate: (user) => {
+        // Convert empty string to null for phone
+        if (user.phone === '') {
+          user.phone = null;
+        }
+      }
+    }
   });
 
   User.associate = (models) => {

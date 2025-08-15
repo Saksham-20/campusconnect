@@ -19,6 +19,8 @@ const eventRoutes = require('./routes/events');
 const assessmentRoutes = require('./routes/assessments');
 const notificationRoutes = require('./routes/notifications');
 const fileRoutes = require('./routes/files');
+const organizationsRoutes = require('./routes/organizations');
+
 
 const app = express();
 
@@ -117,6 +119,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/organizations', organizationsRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

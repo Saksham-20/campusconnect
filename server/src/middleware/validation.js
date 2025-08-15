@@ -6,13 +6,27 @@ const commonValidations = {
   email: body('email').isEmail().normalizeEmail(),
   password: body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
   name: (field) => body(field).trim().isLength({ min: 1, max: 100 }),
-  phone: body('phone').optional().matches(/^[\+]?[1-9][\d]{0,15}$/),
+  // Fixed phone validation to allow empty strings
+  phone: body('phone').optional({ nullable: true, checkFalsy: true }).matches(/^[\+]?[1-9][\d]{0,15}$/),
   url: (field) => body(field).optional().isURL(),
   date: (field) => body(field).optional().isISO8601(),
   id: (field) => param(field).isInt({ min: 1 }),
   positiveInt: (field) => body(field).optional().isInt({ min: 0 }),
   decimal: (field) => body(field).optional().isDecimal({ decimal_digits: '0,2' })
 };
+
+// Alternative approach - custom phone validation
+const validatePhone = body('phone').custom((value) => {
+  // Allow empty, null, or undefined
+  if (!value || value === '') {
+    return true;
+  }
+  // If value exists, validate format
+  if (!/^[\+]?[1-9][\d]{0,15}$/.test(value)) {
+    throw new Error('Invalid phone number format');
+  }
+  return true;
+});
 
 // User validation
 const validateUserRegistration = [
@@ -21,8 +35,9 @@ const validateUserRegistration = [
   commonValidations.name('firstName'),
   commonValidations.name('lastName'),
   body('role').isIn(['student', 'recruiter', 'tpo']),
-  body('organizationId').optional().isInt({ min: 1 })
-];
+  body('organizationId').optional().isInt({ min: 1 }),
+  validatePhone  // Use the custom phone validation
+];  
 
 const validateUserLogin = [
   commonValidations.email,

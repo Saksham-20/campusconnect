@@ -39,45 +39,51 @@ class AuthService {
   }
 
   async register(userData) {
-    const { email, password, role, organizationId, ...profileData } = userData;
+  const { email, password, role, organizationId, ...profileData } = userData;
 
-    // Check if user exists
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      throw new Error('User already exists with this email');
-    }
-
-    // Validate organization if provided
-    if (organizationId) {
-      const organization = await Organization.findByPk(organizationId);
-      if (!organization) {
-        throw new Error('Invalid organization');
-      }
-    }
-
-    // Hash password
-    const passwordHash = await this.hashPassword(password);
-
-    // Create user
-    const user = await User.create({
-      email,
-      passwordHash,
-      role,
-      organizationId,
-      ...profileData
-    });
-
-    // Generate tokens
-    const tokens = this.generateTokens(user.id);
-
-    // Return user without password
-    const { passwordHash: _, ...userWithoutPassword } = user.toJSON();
-
-    return {
-      user: userWithoutPassword,
-      tokens
-    };
+  // Check if user exists
+  const existingUser = await User.findOne({ where: { email } });
+  if (existingUser) {
+    throw new Error('User already exists with this email');
   }
+
+  // Validate organization if provided
+  if (organizationId) {
+    const organization = await Organization.findByPk(organizationId);
+    if (!organization) {
+      throw new Error('Invalid organization');
+    }
+  }
+
+  // Hash password
+  const passwordHash = await this.hashPassword(password);
+
+  // Clean up phone number - convert empty string to null
+  const cleanedProfileData = { ...profileData };
+  if (cleanedProfileData.phone === '') {
+    cleanedProfileData.phone = null;
+  }
+
+  // Create user
+  const user = await User.create({
+    email,
+    passwordHash,
+    role,
+    organizationId,
+    ...cleanedProfileData
+  });
+
+  // Generate tokens
+  const tokens = this.generateTokens(user.id);
+
+  // Return user without password
+  const { passwordHash: _, ...userWithoutPassword } = user.toJSON();
+
+  return {
+    user: userWithoutPassword,
+    tokens
+  };
+}
 
   async login(email, password) {
     // Find user with organization
