@@ -2,7 +2,38 @@
 const { User, StudentProfile, RecruiterProfile, Organization, Achievement } = require('../models');
 const { validationResult } = require('express-validator');
 
+// Helper functions outside the class
+const sanitizeNumericField = (value) => {
+  if (value === '' || value === null || value === undefined || value === 'null') {
+    return null;
+  }
+  // Convert to number and validate
+  const numValue = parseFloat(value);
+  return isNaN(numValue) ? null : numValue;
+};
+
+const sanitizeProfileData = (profileData) => {
+  const sanitized = { ...profileData };
+  
+  // Sanitize numeric fields
+  if ('cgpa' in sanitized) {
+    sanitized.cgpa = sanitizeNumericField(sanitized.cgpa);
+  }
+  if ('percentage' in sanitized) {
+    sanitized.percentage = sanitizeNumericField(sanitized.percentage);
+  }
+  if ('yearOfStudy' in sanitized) {
+    sanitized.yearOfStudy = sanitizeNumericField(sanitized.yearOfStudy);
+  }
+  if ('graduationYear' in sanitized) {
+    sanitized.graduationYear = sanitizeNumericField(sanitized.graduationYear);
+  }
+  
+  return sanitized;
+};
+
 class UserController {
+
   async getProfile(req, res, next) {
     try {
       const userId = req.params.id || req.user.id;
@@ -77,14 +108,17 @@ class UserController {
 
       // Update role-specific profile
       if (user.role === 'student' && profileData) {
+        // SANITIZE PROFILE DATA HERE - This is the key fix!
+        const sanitizedProfileData = sanitizeProfileData(profileData);
+        
         let studentProfile = await StudentProfile.findOne({ where: { userId } });
         
         if (studentProfile) {
-          await studentProfile.update(profileData);
+          await studentProfile.update(sanitizedProfileData);
         } else {
           await StudentProfile.create({
             userId,
-            ...profileData
+            ...sanitizedProfileData
           });
         }
       } else if (user.role === 'recruiter' && profileData) {

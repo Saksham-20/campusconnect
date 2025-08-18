@@ -150,25 +150,84 @@ const Profile = () => {
     }
   };
 
-  const handleAddAchievement = async () => {
-    try {
-      const response = await api.post('/achievements', newAchievement);
-      setAchievements(prev => [response.achievement, ...prev]);
-      setNewAchievement({
-        title: '',
-        description: '',
-        achievementType: 'academic',
-        issuingOrganization: '',
-        issueDate: '',
-        credentialUrl: ''
-      });
-      setShowAchievementModal(false);
-      toast.success('Achievement added successfully');
-    } catch (error) {
-      console.error('Failed to add achievement:', error);
+
+// In your Profile.js file, replace the handleAddAchievement function with this:
+
+const handleAddAchievement = async () => {
+  try {
+    // Prepare and validate data before sending
+    const achievementData = {
+      title: newAchievement.title.trim(),
+      achievementType: newAchievement.achievementType
+    };
+
+    // Add optional fields only if they have values
+    if (newAchievement.description && newAchievement.description.trim()) {
+      achievementData.description = newAchievement.description.trim();
+    }
+
+    if (newAchievement.issuingOrganization && newAchievement.issuingOrganization.trim()) {
+      achievementData.issuingOrganization = newAchievement.issuingOrganization.trim();
+    }
+
+    // Handle date conversion from DD-MM-YYYY to YYYY-MM-DD
+    if (newAchievement.issueDate && newAchievement.issueDate.trim()) {
+      const dateInput = newAchievement.issueDate.trim();
+      console.log('Original date input:', dateInput); // Debug log
+      
+      // Check if date is already in YYYY-MM-DD format
+      if (dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        achievementData.issueDate = dateInput;
+      } else {
+        // Convert DD-MM-YYYY to YYYY-MM-DD
+        const dateParts = dateInput.split('-');
+        if (dateParts.length === 3) {
+          achievementData.issueDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+        }
+      }
+      console.log('Converted date:', achievementData.issueDate); // Debug log
+    }
+
+    // Handle credential URL validation
+    if (newAchievement.credentialUrl && newAchievement.credentialUrl.trim()) {
+      let url = newAchievement.credentialUrl.trim();
+      // Add https:// if missing
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      achievementData.credentialUrl = url;
+    }
+
+    console.log('Final achievement data being sent:', achievementData); // Debug log
+
+    const response = await api.post('/achievements', achievementData);
+    setAchievements(prev => [response.achievement, ...prev]);
+    setNewAchievement({
+      title: '',
+      description: '',
+      achievementType: 'academic',
+      issuingOrganization: '',
+      issueDate: '',
+      credentialUrl: ''
+    });
+    setShowAchievementModal(false);
+    toast.success('Achievement added successfully');
+  } catch (error) {
+    console.error('Failed to add achievement:', error);
+    console.error('Full error response:', error.response); // Debug log
+    
+    // Show specific validation errors if available
+    if (error.response?.data?.details) {
+      console.log('Validation details:', error.response.data.details); // Debug log
+      const errorMessages = error.response.data.details.map(detail => `${detail.path || detail.param}: ${detail.msg}`).join(', ');
+      toast.error(`Validation Error: ${errorMessages}`);
+    } else if (error.response?.data?.message) {
+      toast.error(`Error: ${error.response.data.message}`);
+    } else {
       toast.error('Failed to add achievement');
     }
-  };
+  }
+};
 
   const handleDeleteAchievement = async (achievementId) => {
     try {

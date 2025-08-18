@@ -20,6 +20,7 @@ const assessmentRoutes = require('./routes/assessments');
 const notificationRoutes = require('./routes/notifications');
 const fileRoutes = require('./routes/files');
 const organizationsRoutes = require('./routes/organizations');
+const achievementRoutes = require('./routes/achievements');
 
 
 const app = express();
@@ -120,6 +121,7 @@ app.use('/api/assessments', assessmentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/organizations', organizationsRoutes);
+app.use('/api/achievements', achievementRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
