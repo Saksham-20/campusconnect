@@ -69,6 +69,21 @@ router.get('/role/:role',
 
 /**
  * @swagger
+ * /api/users/top-candidates:
+ *   get:
+ *     summary: Get top candidates for recruiters
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/top-candidates', 
+  authenticateToken, 
+  requireRole('recruiter', 'admin'), 
+  userController.getTopCandidates
+);
+
+/**
+ * @swagger
  * /api/users/{id}:
  *   get:
  *     summary: Get user by ID

@@ -1,5 +1,6 @@
 // client/src/pages/events/Events.js
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -16,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Events = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +36,10 @@ const Events = () => {
         limit: '20'
       });
 
+      console.log('Fetching events with params:', params.toString());
       const response = await api.get(`/events?${params}`);
+      console.log('Events API response:', response);
+      
       setEvents(response.events || []);
       
       // Track registered events
@@ -309,7 +314,7 @@ const Events = () => {
 
             {(user.role === 'recruiter' || user.role === 'tpo') && (
               <button
-                onClick={() => window.location.href = '/events/new'}
+                onClick={() => navigate('/events/new')}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
@@ -342,6 +347,21 @@ const Events = () => {
                 : 'No events match your current filter.'
               }
             </p>
+            
+            {/* Debug Information */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-6 p-4 bg-gray-100 rounded-lg text-left">
+                <h4 className="font-medium text-gray-900 mb-2">Debug Info:</h4>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <div><strong>Filter:</strong> {filter}</div>
+                  <div><strong>Events Count:</strong> {events.length}</div>
+                  <div><strong>User Role:</strong> {user?.role}</div>
+                  <div><strong>User Organization:</strong> {user?.organization?.name || 'None'}</div>
+                  <div><strong>API Response:</strong> {JSON.stringify(events, null, 2)}</div>
+                </div>
+              </div>
+            )}
+            
             {filter === 'registered' && (
               <div className="mt-6">
                 <button

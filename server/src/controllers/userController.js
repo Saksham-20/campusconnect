@@ -1,6 +1,7 @@
 // server/src/controllers/userController.js
 const { User, StudentProfile, RecruiterProfile, Organization, Achievement } = require('../models');
 const { validationResult } = require('express-validator');
+const { Op } = require('sequelize');
 
 // Helper functions outside the class
 const sanitizeNumericField = (value) => {
@@ -339,6 +340,54 @@ class UserController {
         message: 'Search results retrieved successfully',
         users,
         query: q
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTopCandidates(req, res, next) {
+    try {
+      const { limit = 10, organizationId } = req.query;
+      
+      // For recruiters, only show candidates from their organization
+      const targetOrgId = organizationId || req.user.organizationId;
+      
+      if (!targetOrgId) {
+        return res.status(400).json({
+          error: 'Organization Required',
+          message: 'Organization ID is required'
+        });
+      }
+
+      const candidates = await User.findAll({
+        where: {
+          role: 'student',
+          isActive: true,
+          organizationId: targetOrgId
+        },
+        include: [
+          {
+            model: StudentProfile,
+            as: 'studentProfile',
+            required: false // Make it optional so we get students even without profiles
+          },
+          {
+            model: Organization,
+            as: 'organization'
+          }
+        ],
+        attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+        limit: parseInt(limit),
+        order: [
+          ['studentProfile', 'cgpa', 'DESC NULLS LAST'],
+          ['firstName', 'ASC']
+        ]
+      });
+
+      res.json({
+        message: 'Top candidates retrieved successfully',
+        candidates
       });
     } catch (error) {
       next(error);

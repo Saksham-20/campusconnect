@@ -312,8 +312,25 @@ class JobController {
       const { organizationId } = req.query;
       const whereClause = {};
       
-      if (organizationId) whereClause.organizationId = organizationId;
+      // Validate organizationId if provided
+      if (organizationId) {
+        if (isNaN(parseInt(organizationId))) {
+          return res.status(400).json({
+            error: 'Invalid Organization ID',
+            message: 'Organization ID must be a valid number'
+          });
+        }
+        whereClause.organizationId = parseInt(organizationId);
+      }
+      
+      // For recruiters, always use their organization
       if (req.user.role === 'recruiter') {
+        if (!req.user.organizationId) {
+          return res.status(400).json({
+            error: 'Organization Not Found',
+            message: 'User is not associated with any organization'
+          });
+        }
         whereClause.organizationId = req.user.organizationId;
       }
 
@@ -346,6 +363,7 @@ class JobController {
         }
       });
     } catch (error) {
+      console.error('Error in getJobStats:', error);
       next(error);
     }
   }

@@ -54,10 +54,31 @@ class FileController {
 
       // Check permissions
       if (!file.isPublic && file.userId !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({
-          error: 'Access Forbidden',
-          message: 'You do not have permission to download this file'
-        });
+        // Allow recruiters to download student resumes if they have access to the student's applications
+        if (req.user.role === 'recruiter' && file.fileType === 'resume') {
+          // Check if the recruiter has access to any applications from this student
+          const { Application, Job } = require('../models');
+          const hasAccess = await Application.findOne({
+            include: [{
+              model: Job,
+              as: 'job',
+              where: { organizationId: req.user.organizationId }
+            }],
+            where: { studentId: file.userId }
+          });
+          
+          if (!hasAccess) {
+            return res.status(403).json({
+              error: 'Access Forbidden',
+              message: 'You do not have permission to download this file'
+            });
+          }
+        } else {
+          return res.status(403).json({
+            error: 'Access Forbidden',
+            message: 'You do not have permission to download this file'
+          });
+        }
       }
 
       const fileStream = await fileService.getFile(file.filePath);

@@ -12,7 +12,8 @@ import {
   AcademicCapIcon,
   BriefcaseIcon,
   TrophyIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
 const Profile = () => {
@@ -328,16 +329,34 @@ const handleAddAchievement = async () => {
 
           {/* Profile Completion */}
           <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Profile Completion</span>
-              <span className="text-sm text-gray-600">{profileCompletion}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${profileCompletion}%` }}
-              />
-            </div>
+            {profileCompletion === 100 ? (
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CheckCircleIcon className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-green-800">
+                    Profile Completed!
+                  </h3>
+                  <p className="text-sm text-green-700">
+                    You've completed all the required fields. Keep up the good work!
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">Profile Completion</span>
+                  <span className="text-sm text-gray-600">{profileCompletion}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${profileCompletion}%` }}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
 

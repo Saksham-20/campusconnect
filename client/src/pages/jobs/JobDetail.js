@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
 import toast from 'react-hot-toast';
 import {
   CalendarIcon,
@@ -30,36 +31,42 @@ const JobDetail = () => {
   const fetchJobDetails = async () => {
     try {
       setLoading(true);
-      // Replace with actual API call
-      const response = await fetch(`/api/jobs/${id}`);
-      if (response.ok) {
-        const jobData = await response.json();
-        setJob(jobData);
-        // Check if user has already applied
-        if (user?.role === 'student') {
-          checkApplicationStatus(jobData.id);
-        }
-      } else {
-        toast.error('Job not found');
-        navigate('/jobs');
+      const jobData = await api.get(`/jobs/${id}`);
+      setJob(jobData);
+      
+      // Check if user has already applied
+      if (user?.role === 'student') {
+        // Use the job ID from the URL params since that's what we know is valid
+        checkApplicationStatus(id);
       }
     } catch (error) {
       console.error('Error fetching job details:', error);
       toast.error('Failed to load job details');
+      navigate('/jobs');
     } finally {
       setLoading(false);
     }
   };
 
   const checkApplicationStatus = async (jobId) => {
+    if (!jobId) {
+      console.warn('No job ID provided for application status check');
+      return;
+    }
+    
     try {
-      const response = await fetch(`/api/applications/check/${jobId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setHasApplied(data.hasApplied);
-      }
+      // Use the existing /applications endpoint to get all user applications
+      const response = await api.get('/applications');
+      
+      // Check if user has already applied for this specific job
+      // The response structure is { applications: [...], pagination: {...} }
+      const applications = response.applications || [];
+      const hasAppliedForThisJob = applications.some(app => app.jobId === parseInt(jobId));
+      setHasApplied(hasAppliedForThisJob);
     } catch (error) {
       console.error('Error checking application status:', error);
+      // Don't show error toast for this, just log it
+      // This is expected if the user hasn't applied yet
     }
   };
 
@@ -77,27 +84,16 @@ const JobDetail = () => {
 
     try {
       setApplying(true);
-      const response = await fetch('/api/applications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jobId: id,
-          coverLetter: '' // You can add a cover letter modal here
-        })
+      await api.post('/applications', {
+        jobId: id,
+        coverLetter: '' // You can add a cover letter modal here
       });
 
-      if (response.ok) {
-        toast.success('Application submitted successfully!');
-        setHasApplied(true);
-      } else {
-        const error = await response.json();
-        toast.error(error.message || 'Failed to submit application');
-      }
+      toast.success('Application submitted successfully!');
+      setHasApplied(true);
     } catch (error) {
       console.error('Error applying for job:', error);
-      toast.error('Failed to submit application');
+      toast.error(error.message || 'Failed to submit application');
     } finally {
       setApplying(false);
     }
@@ -126,6 +122,21 @@ const JobDetail = () => {
       </div>
     );
   }
+
+  // Safely handle requirements array
+  const requirements = Array.isArray(job?.requirements) ? job.requirements : [
+    "Bachelor's degree in Computer Science or related field",
+    "2+ years of experience with React and Node.js",
+    "Strong problem-solving skills"
+  ];
+
+  // Safely handle skills array
+  const skills = Array.isArray(job?.skills) ? job.skills : [
+    "React",
+    "Node.js",
+    "JavaScript",
+    "MongoDB"
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -208,27 +219,12 @@ const JobDetail = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
               <div className="space-y-2">
-                {job?.requirements?.map((req, index) => (
+                {requirements.map((req, index) => (
                   <div key={index} className="flex items-start">
                     <span className="h-2 w-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                     <span className="text-gray-700">{req}</span>
                   </div>
-                )) || (
-                  <div className="space-y-2">
-                    <div className="flex items-start">
-                      <span className="h-2 w-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-700">Bachelor's degree in Computer Science or related field</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="h-2 w-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-700">2+ years of experience with React and Node.js</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="h-2 w-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-700">Strong problem-solving skills</span>
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
             </div>
 
@@ -236,21 +232,14 @@ const JobDetail = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Required Skills</h2>
               <div className="flex flex-wrap gap-2">
-                {job?.skills?.map((skill, index) => (
+                {skills.map((skill, index) => (
                   <span
                     key={index}
                     className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
                   >
                     {skill}
                   </span>
-                )) || (
-                  <>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">React</span>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Node.js</span>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">JavaScript</span>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">MongoDB</span>
-                  </>
-                )}
+                ))}
               </div>
             </div>
           </div>

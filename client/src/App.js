@@ -17,10 +17,13 @@ import AdminDashboard from './pages/dashboard/AdminDashboard';
 import JobsList from './pages/jobs/JobsList';
 import JobDetail from './pages/jobs/JobDetail';
 import JobPost from './pages/jobs/JobPost';
+import JobEdit from './pages/jobs/JobEdit';
 import Profile from './pages/profile/Profile';
 import ResumePage from './pages/resume/ResumePage';
 import Applications from './pages/applications/Applications';
+import ApplicationDetail from './pages/applications/ApplicationDetail';
 import Events from './pages/events/Events';
+import EventForm from './pages/events/EventForm';
 
 import './styles/index.css';
 
@@ -95,6 +98,13 @@ function App() {
                 </ProtectedRoute>
               } />
               
+              <Route path="/jobs/:id/edit" element={
+                <ProtectedRoute requiredRoles={['recruiter', 'tpo']}>
+                  <Header />
+                  <JobEdit />
+                </ProtectedRoute>
+              } />
+              
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Header />
@@ -116,10 +126,31 @@ function App() {
                 </ProtectedRoute>
               } />
               
+              <Route path="/applications/:id" element={
+                <ProtectedRoute>
+                  <Header />
+                  <ApplicationDetail />
+                </ProtectedRoute>
+              } />
+              
               <Route path="/events" element={
                 <ProtectedRoute>
                   <Header />
                   <Events />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/events/new" element={
+                <ProtectedRoute requiredRoles={['recruiter', 'tpo']}>
+                  <Header />
+                  <EventForm />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/events/:id/edit" element={
+                <ProtectedRoute requiredRoles={['recruiter', 'tpo']}>
+                  <Header />
+                  <EventForm />
                 </ProtectedRoute>
               } />
               

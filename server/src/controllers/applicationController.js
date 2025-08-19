@@ -151,8 +151,7 @@ class ApplicationController {
         whereClause.studentId = req.user.id;
       } else if (req.user.role === 'recruiter') {
         // Only show applications for jobs from recruiter's organization
-        const jobWhereClause = { organizationId: req.user.organizationId };
-        if (jobId) jobWhereClause.id = jobId;
+        // This is handled in the include options below
       }
 
       const includeOptions = [

@@ -1,15 +1,18 @@
-// client/src/pages/jobs/JobPost.js
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// client/src/pages/jobs/JobEdit.js
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
-const JobPost = () => {
+const JobEdit = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [isLoadingJob, setIsLoadingJob] = useState(true);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     title: '',
@@ -32,6 +35,51 @@ const JobPost = () => {
     { value: 'part_time', label: 'Part Time' },
     { value: 'internship', label: 'Internship' }
   ];
+
+  useEffect(() => {
+    fetchJobDetails();
+  }, [id]);
+
+  const fetchJobDetails = async () => {
+    try {
+      setIsLoadingJob(true);
+      const response = await api.get(`/jobs/${id}`);
+      const job = response.job || response;
+      
+      // Check if user can edit this job
+      if (job.organizationId !== user.organizationId) {
+        toast.error('You are not authorized to edit this job');
+        navigate('/jobs');
+        return;
+      }
+
+      // Convert requirements from string to array
+      const requirements = job.requirements ? job.requirements.split('\n').filter(req => req.trim()) : [''];
+      if (requirements.length === 0) requirements.push('');
+
+      setFormData({
+        title: job.title || '',
+        description: job.description || '',
+        requirements: requirements,
+        skillsRequired: job.skillsRequired || [''],
+        jobType: job.jobType || 'full_time',
+        location: job.location || '',
+        salaryMin: job.salaryMin ? job.salaryMin.toString() : '',
+        salaryMax: job.salaryMax ? job.salaryMax.toString() : '',
+        experienceRequired: job.experienceRequired || 0,
+        totalPositions: job.totalPositions || 1,
+        applicationDeadline: job.applicationDeadline ? job.applicationDeadline.split('T')[0] : '',
+        minCGPA: job.eligibilityCriteria?.minCGPA ? job.eligibilityCriteria.minCGPA.toString() : '',
+        isActive: job.status === 'active'
+      });
+    } catch (error) {
+      console.error('Failed to fetch job details:', error);
+      toast.error('Failed to load job details');
+      navigate('/jobs');
+    } finally {
+      setIsLoadingJob(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -106,30 +154,11 @@ const JobPost = () => {
     setErrors({});
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      requirements: [''],
-      skillsRequired: [''],
-      jobType: 'full_time',
-      location: '',
-      salaryMin: '',
-      salaryMax: '',
-      experienceRequired: 0,
-      totalPositions: 1,
-      applicationDeadline: '',
-      minCGPA: '',
-      isActive: true
-    });
-    clearErrors();
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!user || (user.role !== 'recruiter' && user.role !== 'tpo')) {
-      toast.error('You are not authorized to post jobs');
+      toast.error('You are not authorized to edit jobs');
       return;
     }
 
@@ -181,31 +210,38 @@ const JobPost = () => {
         cleanedData.applicationDeadline = formData.applicationDeadline;
       }
 
-      const response = await api.post('/jobs', cleanedData);
+      await api.put(`/jobs/${id}`, cleanedData);
 
-      toast.success('Job created....');
-      resetForm();
-      navigate(`/jobs/${response.job.id}`);
+      toast.success('Job updated successfully!');
+      navigate(`/jobs/${id}`);
     } catch (error) {
-      console.error('Error posting job:', error);
+      console.error('Error updating job:', error);
       if (error.data && error.data.details) {
         // Show specific validation errors
         const errorMessages = error.data.details.map(detail => detail.message).join(', ');
         toast.error(`Validation error: ${errorMessages}`);
       } else {
-        toast.error(error.message || 'Failed to post job');
+        toast.error(error.message || 'Failed to update job');
       }
     } finally {
       setLoading(false);
     }
   };
 
+  if (isLoadingJob) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="large" />
+      </div>
+    );
+  }
+
   if (!user || (user.role !== 'recruiter' && user.role !== 'tpo')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You are not authorized to post jobs.</p>
+          <p className="text-gray-600 mb-4">You are not authorized to edit jobs.</p>
           <button
             onClick={() => navigate('/jobs')}
             className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
@@ -220,49 +256,68 @@ const JobPost = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900">Post a New Job</h1>
-            <p className="text-gray-600 mt-1">Fill in the details to create a new job posting</p>
-          </div>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Edit Job</h1>
+          <p className="text-gray-600 mt-1">Update your job posting</p>
+        </div>
 
+        {/* Form */}
+        <div className="bg-white shadow rounded-lg">
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Basic Information */}
+            {/* Job Title */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Job Title *
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.title ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="e.g., Software Engineer"
+              />
+              {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+            </div>
+
+            {/* Job Description */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Job Description *
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={6}
+                className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.description ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Describe the role, responsibilities, and what you're looking for..."
+              />
+              {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+            </div>
+
+            {/* Job Type and Location */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Job Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  required
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.title ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="e.g. Software Engineer"
-                />
-                {errors.title && (
-                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Job Type *
+                  Job Type
                 </label>
                 <select
                   name="jobType"
                   value={formData.jobType}
                   onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="full_time">Full-time</option>
-                  <option value="part_time">Part-time</option>
-                  <option value="internship">Internship</option>
+                  {jobTypeOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -275,52 +330,53 @@ const JobPost = () => {
                   name="location"
                   value={formData.location}
                   onChange={handleInputChange}
-                  required
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
                     errors.location ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="e.g. Mumbai, India / Remote"
+                  placeholder="e.g., New York, NY"
                 />
-                {errors.location && (
-                  <p className="mt-1 text-sm text-red-600">{errors.location}</p>
-                )}
+                {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location}</p>}
               </div>
+            </div>
 
+            {/* Salary Range */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum Salary
+                  Minimum Salary (Optional)
                 </label>
                 <input
                   type="number"
                   name="salaryMin"
                   value={formData.salaryMin}
                   onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="50000"
                   min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g. 500000"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Maximum Salary
+                  Maximum Salary (Optional)
                 </label>
                 <input
                   type="number"
                   name="salaryMax"
                   value={formData.salaryMax}
                   onChange={handleInputChange}
-                  min="0"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
                     errors.salaryMax ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="e.g. 800000"
+                  placeholder="80000"
+                  min="0"
                 />
-                {errors.salaryMax && (
-                  <p className="mt-1 text-sm text-red-600">{errors.salaryMax}</p>
-                )}
+                {errors.salaryMax && <p className="mt-1 text-sm text-red-600">{errors.salaryMax}</p>}
               </div>
+            </div>
 
+            {/* Experience and Positions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Experience Required (years)
@@ -330,90 +386,66 @@ const JobPost = () => {
                   name="experienceRequired"
                   value={formData.experienceRequired}
                   onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g. 2"
+                  max="20"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Openings
+                  Total Positions
                 </label>
                 <input
                   type="number"
                   name="totalPositions"
                   value={formData.totalPositions}
                   onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  max="100"
                 />
+              </div>
+            </div>
+
+            {/* Application Deadline and Min CGPA */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Application Deadline
+                </label>
+                <input
+                  type="date"
+                  name="applicationDeadline"
+                  value={formData.applicationDeadline}
+                  onChange={handleInputChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.applicationDeadline ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.applicationDeadline && <p className="mt-1 text-sm text-red-600">{errors.applicationDeadline}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum CGPA
+                  Minimum CGPA (Optional)
                 </label>
-                                  <input
-                    type="number"
-                    name="minCGPA"
-                    value={formData.minCGPA}
-                    onChange={handleInputChange}
-                    step="0.1"
-                    min="0"
-                    max="10"
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.minCGPA ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="e.g. 7.0"
-                  />
-                  {errors.minCGPA && (
-                    <p className="mt-1 text-sm text-red-600">{errors.minCGPA}</p>
-                  )}
+                <input
+                  type="number"
+                  name="minCGPA"
+                  value={formData.minCGPA}
+                  onChange={handleInputChange}
+                  step="0.01"
+                  min="0"
+                  max="10"
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.minCGPA ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="7.5"
+                />
+                {errors.minCGPA && <p className="mt-1 text-sm text-red-600">{errors.minCGPA}</p>}
               </div>
-
-                                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Application Deadline
-                    </label>
-                    <input
-                      type="date"
-                      name="applicationDeadline"
-                      value={formData.applicationDeadline}
-                      onChange={handleInputChange}
-                      min={new Date().toISOString().split('T')[0]}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.applicationDeadline ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                                          <p className="mt-1 text-xs text-gray-500">
-                        Select a future date for the application deadline
-                      </p>
-                      {errors.applicationDeadline && (
-                        <p className="mt-1 text-sm text-red-600">{errors.applicationDeadline}</p>
-                      )}
-                    </div>
-            </div>
-
-            {/* Job Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Job Description *
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                required
-                rows={6}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.description ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Describe the role, responsibilities, and what you're looking for..."
-              />
-              {errors.description && (
-                <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-              )}
             </div>
 
             {/* Requirements */}
@@ -427,8 +459,8 @@ const JobPost = () => {
                     type="text"
                     value={requirement}
                     onChange={(e) => handleArrayInputChange(index, e.target.value, 'requirements')}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter a requirement"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter a requirement..."
                   />
                   {formData.requirements.length > 1 && (
                     <button
@@ -436,7 +468,7 @@ const JobPost = () => {
                       onClick={() => removeArrayItem(index, 'requirements')}
                       className="p-2 text-red-600 hover:text-red-800"
                     >
-                      <XMarkIcon className="h-4 w-4" />
+                      <XMarkIcon className="h-5 w-5" />
                     </button>
                   )}
                 </div>
@@ -444,14 +476,14 @@ const JobPost = () => {
               <button
                 type="button"
                 onClick={() => addArrayItem('requirements')}
-                className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
-                <PlusIcon className="h-4 w-4 mr-1" />
+                <PlusIcon className="h-4 w-4 mr-2" />
                 Add Requirement
               </button>
             </div>
 
-            {/* Skills */}
+            {/* Required Skills */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Required Skills
@@ -462,8 +494,8 @@ const JobPost = () => {
                     type="text"
                     value={skill}
                     onChange={(e) => handleArrayInputChange(index, e.target.value, 'skillsRequired')}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter a skill"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter a skill..."
                   />
                   {formData.skillsRequired.length > 1 && (
                     <button
@@ -471,7 +503,7 @@ const JobPost = () => {
                       onClick={() => removeArrayItem(index, 'skillsRequired')}
                       className="p-2 text-red-600 hover:text-red-800"
                     >
-                      <XMarkIcon className="h-4 w-4" />
+                      <XMarkIcon className="h-5 w-5" />
                     </button>
                   )}
                 </div>
@@ -479,14 +511,14 @@ const JobPost = () => {
               <button
                 type="button"
                 onClick={() => addArrayItem('skillsRequired')}
-                className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
-                <PlusIcon className="h-4 w-4 mr-1" />
+                <PlusIcon className="h-4 w-4 mr-2" />
                 Add Skill
               </button>
             </div>
 
-            {/* Job Status */}
+            {/* Active Status */}
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -495,34 +527,26 @@ const JobPost = () => {
                 onChange={handleInputChange}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label className="ml-2 block text-sm text-gray-700">
+              <label className="ml-2 block text-sm text-gray-900">
                 Make this job active immediately
               </label>
             </div>
 
-            {/* Submit Buttons */}
-            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+            {/* Form Actions */}
+            <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => navigate('/jobs')}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="px-6 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
-                type="button"
-                onClick={resetForm}
-                disabled={loading}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-              >
-                Reset
-              </button>
-              <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
               >
-                {loading ? 'Posting...' : 'Post Job'}
+                {loading ? 'Updating...' : 'Update Job'}
               </button>
             </div>
           </form>
@@ -532,4 +556,4 @@ const JobPost = () => {
   );
 };
 
-export default JobPost;
+export default JobEdit;

@@ -29,12 +29,25 @@ router.post('/',
   authenticateToken, 
   requireRole('recruiter', 'tpo', 'admin'),
   [
-    body('title').notEmpty().isLength({ min: 3, max: 255 }),
-    body('description').notEmpty(),
+    body('title').notEmpty().trim().isLength({ min: 3, max: 255 }),
+    body('description').notEmpty().trim(),
     body('eventType').isIn(['campus_drive', 'info_session', 'workshop', 'seminar', 'job_fair', 'other']),
-    body('startTime').isISO8601(),
-    body('endTime').isISO8601(),
-    body('maxParticipants').optional().isInt({ min: 1 })
+    body('startTime').notEmpty().isISO8601(),
+    body('endTime').notEmpty().isISO8601(),
+    body('location').optional().trim(),
+    body('maxParticipants').optional().isInt({ min: 1 }),
+    body('virtualLink').optional().isURL(),
+    body('status').optional().isIn(['draft', 'scheduled', 'ongoing', 'completed', 'cancelled']),
+    body().custom((body) => {
+      if (body.startTime && body.endTime) {
+        const startTime = new Date(body.startTime);
+        const endTime = new Date(body.endTime);
+        if (startTime >= endTime) {
+          throw new Error('End time must be after start time');
+        }
+      }
+      return true;
+    })
   ],
   eventController.createEvent
 );
@@ -60,6 +73,27 @@ router.get('/:id', optionalAuth, eventController.getEventById);
 router.put('/:id', 
   authenticateToken, 
   requireRole('recruiter', 'tpo', 'admin'),
+  [
+    body('title').notEmpty().trim().isLength({ min: 3, max: 255 }),
+    body('description').notEmpty().trim(),
+    body('eventType').isIn(['campus_drive', 'info_session', 'workshop', 'seminar', 'job_fair', 'other']),
+    body('startTime').notEmpty().isISO8601(),
+    body('endTime').notEmpty().isISO8601(),
+    body('location').optional().trim(),
+    body('maxParticipants').optional().isInt({ min: 1 }),
+    body('virtualLink').optional().isURL(),
+    body('status').optional().isIn(['draft', 'scheduled', 'ongoing', 'completed', 'cancelled']),
+    body().custom((body) => {
+      if (body.startTime && body.endTime) {
+        const startTime = new Date(body.startTime);
+        const endTime = new Date(body.endTime);
+        if (startTime >= endTime) {
+          throw new Error('End time must be after start time');
+        }
+      }
+      return true;
+    })
+  ],
   eventController.updateEvent
 );
 

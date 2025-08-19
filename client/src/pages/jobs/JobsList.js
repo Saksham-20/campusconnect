@@ -1,9 +1,10 @@
 // client/src/pages/jobs/JobsList.js
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import toast from 'react-hot-toast';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -12,15 +13,20 @@ import {
   CalendarIcon,
   BriefcaseIcon,
   BuildingOfficeIcon,
-  XMarkIcon
+  XMarkIcon,
+  PencilIcon,
+  TrashIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 
 const JobsList = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pagination, setPagination] = useState({});
+  const [deletingJobId, setDeletingJobId] = useState(null);
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
     jobType: searchParams.get('jobType') || '',
@@ -117,6 +123,37 @@ const JobsList = () => {
     return `${Math.floor(diffInDays / 30)} months ago`;
   };
 
+  const handleDeleteJob = async (jobId) => {
+    if (!window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setDeletingJobId(jobId);
+      await api.delete(`/jobs/${jobId}`);
+      
+      toast.success('Job deleted successfully');
+      
+      // Remove the deleted job from the list
+      setJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
+      
+      // Refresh the list if we're on the last page and it becomes empty
+      if (jobs.length === 1 && pagination.currentPage > 1) {
+        fetchJobs(pagination.currentPage - 1);
+      }
+    } catch (error) {
+      console.error('Failed to delete job:', error);
+      toast.error('Failed to delete job');
+    } finally {
+      setDeletingJobId(null);
+    }
+  };
+
+  const canManageJob = (job) => {
+    return user && ['recruiter', 'admin', 'tpo'].includes(user.role) && 
+           job.organizationId === user.organizationId;
+  };
+
   const JobCard = ({ job }) => (
     <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow duration-200 p-6">
       <div className="flex items-start justify-between">
@@ -177,14 +214,41 @@ const JobsList = () => {
               )}
             </div>
             
-            {user?.role === 'student' && (
-              <Link
-                to={`/jobs/${job.id}`}
-                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-600 bg-blue-100 hover:bg-blue-200"
-              >
-                View Details
-              </Link>
-            )}
+            <div className="flex items-center space-x-2">
+              {user?.role === 'student' ? (
+                <Link
+                  to={`/jobs/${job.id}`}
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-600 bg-blue-100 hover:bg-blue-200"
+                >
+                  View Details
+                </Link>
+              ) : canManageJob(job) ? (
+                <>
+                  <Link
+                    to={`/jobs/${job.id}/edit`}
+                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <PencilIcon className="h-4 w-4 mr-1" />
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleDeleteJob(job.id)}
+                    disabled={deletingJobId === job.id}
+                    className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <TrashIcon className="h-4 w-4 mr-1" />
+                    {deletingJobId === job.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to={`/jobs/${job.id}`}
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-600 bg-blue-100 hover:bg-blue-200"
+                >
+                  View Details
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -196,12 +260,25 @@ const JobsList = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {user?.role === 'student' ? 'Find Your Dream Job' : 'Job Listings'}
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Discover opportunities that match your skills and interests
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {user?.role === 'student' ? 'Find Your Dream Job' : 'Job Listings'}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Discover opportunities that match your skills and interests
+              </p>
+            </div>
+            {user && ['recruiter', 'tpo'].includes(user.role) && (
+              <Link
+                to="/jobs/new"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              >
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Post New Job
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Search and Filters */}

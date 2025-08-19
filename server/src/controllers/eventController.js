@@ -59,6 +59,18 @@ class EventController {
         whereClause.startTime = { [Op.gte]: new Date() };
       }
 
+      // For students, show events from their university and all company events
+      if (req.user && req.user.role === 'student') {
+        // Don't filter by organizationId for students - they should see all relevant events
+        // This will show events from their university and company events
+      } else if (req.user && req.user.role === 'recruiter') {
+        // Recruiters only see events from their organization
+        whereClause.organizationId = req.user.organizationId;
+      } else if (req.user && req.user.role === 'tpo') {
+        // TPOs see events from their university
+        whereClause.organizationId = req.user.organizationId;
+      }
+
       const { count, rows: events } = await Event.findAndCountAll({
         where: whereClause,
         include: [
@@ -81,6 +93,13 @@ class EventController {
       const eventsWithCounts = events.map(event => {
         const eventData = event.toJSON();
         eventData.registrationCount = event.registrations ? event.registrations.length : 0;
+        
+        // Check if current user is registered for this event
+        if (req.user) {
+          const userRegistration = event.registrations?.find(reg => reg.userId === req.user.id);
+          eventData.userRegistration = userRegistration;
+        }
+        
         delete eventData.registrations;
         return eventData;
       });

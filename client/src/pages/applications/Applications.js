@@ -226,18 +226,21 @@ const Applications = () => {
                   <p>Location: {application.job?.location || 'Not specified'}</p>
                   <p>Type: {application.job?.jobType?.replace('_', ' ') || 'Not specified'}</p>
                 </>
-              ) : (
-                <>
-                  <p>Applied for: <span className="font-medium">{application.job?.title}</span></p>
-                  <p>Email: {application.student?.email}</p>
-                  {application.student?.studentProfile && (
-                    <>
-                      <p>Course: {application.student.studentProfile.course}</p>
-                      <p>CGPA: {application.student.studentProfile.cgpa || 'Not provided'}</p>
-                    </>
-                  )}
-                </>
-              )}
+                              ) : (
+                  <>
+                    <p>Applied for: <span className="font-medium">{application.job?.title}</span></p>
+                    <p>Email: {application.student?.email}</p>
+                    {application.student?.studentProfile && (
+                      <>
+                        <p>Course: {application.student.studentProfile.course} • {application.student.studentProfile.branch}</p>
+                        <p>CGPA: {application.student.studentProfile.cgpa || 'Not provided'} • Year: {application.student.studentProfile.yearOfStudy}</p>
+                        {application.student.studentProfile.skills && application.student.studentProfile.skills.length > 0 && (
+                          <p>Skills: {application.student.studentProfile.skills.slice(0, 3).join(', ')}</p>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
               
               <div className="flex items-center text-xs text-gray-500">
                 <CalendarIcon className="h-4 w-4 mr-1" />
