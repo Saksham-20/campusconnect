@@ -45,6 +45,7 @@ const ApplicationDetail = () => {
   const fetchApplicationDetails = async () => {
     try {
       console.log('ApplicationDetail: Fetching application with ID:', id);
+      console.log('ApplicationDetail: Current user:', user);
       setIsLoading(true);
       const response = await api.get(`/applications/${id}`);
       console.log('ApplicationDetail: API response:', response);
@@ -52,8 +53,20 @@ const ApplicationDetail = () => {
       setNewStatus(response.application?.status || response?.status || '');
     } catch (error) {
       console.error('ApplicationDetail: Failed to fetch application details:', error);
-      toast.error('Failed to load application details');
-      navigate('/applications');
+      console.error('ApplicationDetail: Error details:', {
+        status: error.status,
+        message: error.message,
+        data: error.data
+      });
+      
+      if (error.status === 403) {
+        toast.error('Access denied. You do not have permission to view this application.');
+      } else {
+        toast.error('Failed to load application details');
+      }
+      
+      // Don't navigate away immediately, let user see the error
+      // navigate('/applications');
     } finally {
       setIsLoading(false);
     }

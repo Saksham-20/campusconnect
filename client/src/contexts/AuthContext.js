@@ -46,23 +46,33 @@ export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   useEffect(() => {
-    checkAuthStatus();
-  }, []);
+    // Only check auth status if we don't already have a user
+    if (!state.user && !state.isAuthenticated) {
+      checkAuthStatus();
+    }
+  }, []); // Remove dependencies to prevent infinite loops
 
   const checkAuthStatus = async () => {
     try {
+      console.log('Checking auth status...');
       const tokens = authService.getTokens();
+      console.log('Tokens from localStorage:', tokens);
+      
       if (tokens && tokens.accessToken) {
         const user = await authService.getCurrentUser();
+        console.log('User from API:', user);
         dispatch({
           type: 'LOGIN_SUCCESS',
           payload: { user, tokens }
         });
+      } else {
+        console.log('No valid tokens found');
+        dispatch({ type: 'SET_LOADING', payload: false });
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      // Clear any corrupted tokens
       authService.clearTokens();
-    } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
@@ -71,6 +81,8 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await authService.login(email, password);
+      
+      console.log('Login response:', response);
       
       dispatch({
         type: 'LOGIN_SUCCESS',

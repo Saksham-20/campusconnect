@@ -79,6 +79,27 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false,
       field: 'is_verified'
     },
+    approvalStatus: {
+      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      defaultValue: 'pending',
+      field: 'approval_status'
+    },
+    approvedBy: {
+      type: DataTypes.INTEGER,
+      field: 'approved_by',
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
+    approvedAt: {
+      type: DataTypes.DATE,
+      field: 'approved_at'
+    },
+    approvalNotes: {
+      type: DataTypes.TEXT,
+      field: 'approval_notes'
+    },
     lastLogin: {
       type: DataTypes.DATE,
       field: 'last_login'
@@ -139,6 +160,14 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.File, {
       foreignKey: 'userId',
       as: 'files'
+    });
+    User.hasMany(models.Organization, {
+      foreignKey: 'approvedBy',
+      as: 'approvedOrganizations'
+    });
+    User.hasMany(models.User, {
+      foreignKey: 'approvedBy',
+      as: 'approvedUsers'
     });
   };
 

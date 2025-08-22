@@ -152,6 +152,9 @@ class ApplicationController {
       } else if (req.user.role === 'recruiter') {
         // Only show applications for jobs from recruiter's organization
         // This is handled in the include options below
+      } else if (req.user.role === 'tpo') {
+        // TPO users can only see applications from students in their organization
+        // This is handled in the include options below
       }
 
       const includeOptions = [
@@ -163,7 +166,7 @@ class ApplicationController {
         {
           model: User,
           as: 'student',
-          attributes: ['id', 'firstName', 'lastName', 'email'],
+          attributes: ['id', 'firstName', 'lastName', 'email', 'organizationId'],
           include: [{ model: StudentProfile, as: 'studentProfile' }]
         }
       ];
@@ -173,24 +176,63 @@ class ApplicationController {
         includeOptions[0].where = { organizationId: req.user.organizationId };
       }
 
+      // For TPO users, we need to filter applications by student organization
+      if (req.user.role === 'tpo') {
+        // Get all students in the TPO's organization
+        const studentsInOrg = await User.findAll({
+          where: { 
+            role: 'student',
+            organizationId: req.user.organizationId 
+          },
+          attributes: ['id']
+        });
+        
+        const studentIds = studentsInOrg.map(student => student.id);
+        
+        // Only show applications from these students
+        whereClause.studentId = { [Op.in]: studentIds };
+        
+        console.log('TPO Student Filter:', {
+          tpoOrgId: req.user.organizationId,
+          studentIds,
+          studentCount: studentIds.length
+        });
+      }
+
       const { count, rows: applications } = await Application.findAndCountAll({
         where: whereClause,
         include: includeOptions,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['createdAt', 'DESC']],
-        distinct: true
+        order: [['createdAt', 'DESC']]
       });
+
+      // Debug logging
+      console.log('Applications Query Debug:', {
+        userId: req.user.id,
+        userRole: req.user.role,
+        userOrgId: req.user.organizationId,
+        whereClause,
+        count,
+        applicationsCount: applications.length,
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      // Ensure pagination object has all required fields
+      const pagination = {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(count / limit),
+        totalItems: count,
+        totalApplications: count,
+        hasMore: offset + applications.length < count,
+        limit: parseInt(limit)
+      };
 
       res.json({
         message: 'Applications retrieved successfully',
         applications,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(count / limit),
-          totalApplications: count,
-          hasMore: offset + applications.length < count
-        }
+        pagination
       });
     } catch (error) {
       next(error);
@@ -211,7 +253,7 @@ class ApplicationController {
           {
             model: User,
             as: 'student',
-            attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+            attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'organizationId'],
             include: [{ model: StudentProfile, as: 'studentProfile' }]
           }
         ]
@@ -224,13 +266,34 @@ class ApplicationController {
         });
       }
 
-      // Check permissions
-      const canView = req.user.role === 'admin' ||
-                     application.studentId === req.user.id ||
-                     (req.user.role === 'recruiter' && 
-                      application.job.organizationId === req.user.organizationId) ||
-                     (req.user.role === 'tpo' && 
-                      application.student.organizationId === req.user.organizationId);
+      // Check permissions with better debugging
+      let canView = false;
+      
+      if (req.user.role === 'admin') {
+        canView = true;
+      } else if (application.studentId === req.user.id) {
+        // Students can always view their own applications
+        canView = true;
+      } else if (req.user.role === 'recruiter') {
+        // Recruiters can view applications for jobs from their organization
+        canView = application.job && application.job.organizationId === req.user.organizationId;
+      } else if (req.user.role === 'tpo') {
+        // TPO can view applications from students in their organization OR jobs from their organization
+        canView = (application.student && application.student.organizationId === req.user.organizationId) ||
+                  (application.job && application.job.organizationId === req.user.organizationId);
+      }
+
+      // Debug logging for permission issues
+      console.log('Permission Check Debug:', {
+        userId: req.user.id,
+        userRole: req.user.role,
+        userOrgId: req.user.organizationId,
+        applicationId: application.id,
+        studentId: application.studentId,
+        studentOrgId: application.student?.organizationId,
+        jobOrgId: application.job?.organizationId,
+        canView
+      });
 
       if (!canView) {
         return res.status(403).json({

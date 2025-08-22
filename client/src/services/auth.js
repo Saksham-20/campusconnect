@@ -48,8 +48,22 @@ class AuthService {
   };
 
   getTokens = () => {
-    const tokens = localStorage.getItem(TOKEN_KEY);
-    return tokens ? JSON.parse(tokens) : null;
+    try {
+      const tokens = localStorage.getItem(TOKEN_KEY);
+      if (!tokens) return null;
+      
+      const parsedTokens = JSON.parse(tokens);
+      // Validate that tokens have the expected structure
+      if (parsedTokens && typeof parsedTokens === 'object' && parsedTokens.accessToken) {
+        return parsedTokens;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error parsing tokens from localStorage:', error);
+      // Clear corrupted tokens
+      this.clearTokens();
+      return null;
+    }
   };
 
   clearTokens = () => {
@@ -62,4 +76,5 @@ class AuthService {
   };
 }
 
-export default new AuthService();
+const authService = new AuthService();
+export default authService;

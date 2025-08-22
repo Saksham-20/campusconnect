@@ -52,6 +52,9 @@ const Applications = () => {
     } catch (error) {
       console.error('Failed to fetch applications:', error);
       toast.error('Failed to load applications');
+      // Set empty state on error
+      setApplications([]);
+      setPagination({});
     } finally {
       setIsLoading(false);
     }
@@ -363,7 +366,7 @@ const Applications = () => {
             </div>
 
             <div className="text-sm text-gray-600">
-              {pagination.totalItems || 0} applications found
+              {pagination.totalItems ? `${pagination.totalItems} applications found` : `${applications.length} applications found`}
             </div>
           </div>
 

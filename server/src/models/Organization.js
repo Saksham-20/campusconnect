@@ -53,6 +53,27 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       field: 'is_verified'
+    },
+    approvalStatus: {
+      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      defaultValue: 'pending',
+      field: 'approval_status'
+    },
+    approvedBy: {
+      type: DataTypes.INTEGER,
+      field: 'approved_by',
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
+    approvedAt: {
+      type: DataTypes.DATE,
+      field: 'approved_at'
+    },
+    approvalNotes: {
+      type: DataTypes.TEXT,
+      field: 'approval_notes'
     }
   }, {
     tableName: 'organizations',
@@ -72,6 +93,10 @@ module.exports = (sequelize, DataTypes) => {
     Organization.hasMany(models.Event, {
       foreignKey: 'organizationId',
       as: 'events'
+    });
+    Organization.belongsTo(models.User, {
+      foreignKey: 'approvedBy',
+      as: 'approver'
     });
   };
 

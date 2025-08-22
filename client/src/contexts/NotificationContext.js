@@ -1,5 +1,5 @@
 // client/src/contexts/NotificationContext.js
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -75,28 +75,15 @@ const notificationReducer = (state, action) => {
 export const NotificationProvider = ({ children }) => {
   const [state, dispatch] = useReducer(notificationReducer, initialState);
   const { isAuthenticated, user } = useAuth();
+  const isInitialized = useRef(false);
 
-  // Fetch notifications when user is authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchNotifications();
-      fetchUnreadCount();
-    }
-  }, [isAuthenticated, user]);
-
-  // Set up polling for real-time notifications
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const interval = setInterval(() => {
-      fetchUnreadCount();
-    }, 30000); // Poll every 30 seconds
-
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
-
-  const fetchNotifications = async (page = 1, limit = 20) => {
+  const fetchNotifications = useCallback(async (page = 1, limit = 20) => {
     try {
+      // Only fetch if user is authenticated
+      if (!isAuthenticated || !user) {
+        return;
+      }
+      
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await api.get(`/notifications?page=${page}&limit=${limit}`);
       
@@ -110,19 +97,54 @@ export const NotificationProvider = ({ children }) => {
         });
       }
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
       console.error('Failed to fetch notifications:', error);
+      // Don't show error for unauthenticated users
+      if (error.status !== 401) {
+        dispatch({ type: 'SET_ERROR', payload: error.message });
+      }
     }
-  };
+  }, [isAuthenticated, user]);
 
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     try {
+      // Only fetch if user is authenticated
+      if (!isAuthenticated || !user) {
+        return;
+      }
       const response = await api.get('/notifications/unread-count');
       dispatch({ type: 'SET_UNREAD_COUNT', payload: response.unreadCount });
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
+      // Don't show error for unauthenticated users
+      if (error.status !== 401) {
+        console.error('Failed to fetch unread count:', error);
+      }
     }
-  };
+  }, [isAuthenticated, user]);
+
+  // Fetch notifications when user is authenticated - only once
+  useEffect(() => {
+    if (isAuthenticated && user && !isInitialized.current) {
+      isInitialized.current = true;
+      fetchNotifications();
+      fetchUnreadCount();
+    }
+  }, [isAuthenticated, user]);
+
+  // Set up polling for real-time notifications - only when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const interval = setInterval(() => {
+      if (isAuthenticated) {
+        fetchUnreadCount();
+      }
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, fetchUnreadCount]);
+
+
 
   const markAsRead = async (notificationId) => {
     try {

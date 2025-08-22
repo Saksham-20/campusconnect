@@ -32,7 +32,7 @@ api.interceptors.request.use(
 // Response interceptor for token refresh and error handling
 api.interceptors.response.use(
   (response) => {
-    // Return the data directly
+    // Return the data directly for easier consumption
     return response.data;
   },
   async (error) => {
