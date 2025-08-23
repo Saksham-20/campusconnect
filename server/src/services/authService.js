@@ -2,6 +2,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User, Organization } = require('../models');
+const notificationService = require('./notificationService');
 
 class AuthService {
   async hashPassword(password) {
@@ -39,51 +40,135 @@ class AuthService {
   }
 
   async register(userData) {
-  const { email, password, role, organizationId, ...profileData } = userData;
+    const { email, password, role, organizationId, ...profileData } = userData;
 
-  // Check if user exists
-  const existingUser = await User.findOne({ where: { email } });
-  if (existingUser) {
-    throw new Error('User already exists with this email');
+    // Check if user exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      throw new Error('User already exists with this email');
+    }
+
+    // Validate organization if provided
+    if (organizationId) {
+      const organization = await Organization.findByPk(organizationId);
+      if (!organization) {
+        throw new Error('Invalid organization');
+      }
+
+      // For one college system: validate organization type matches role
+      if (role === 'student' || role === 'tpo') {
+        if (organization.type !== 'university') {
+          throw new Error('Students and TPO can only register with university organizations');
+        }
+      } else if (role === 'recruiter') {
+        if (organization.type !== 'company') {
+          throw new Error('Recruiters can only register with company organizations');
+        }
+      }
+    }
+
+    // Hash password
+    const passwordHash = await this.hashPassword(password);
+
+    // Clean up phone number - convert empty string to null
+    const cleanedProfileData = { ...profileData };
+    if (cleanedProfileData.phone === '') {
+      cleanedProfileData.phone = null;
+    }
+
+    // Set approval status based on role
+    let approvalStatus = 'approved'; // Default for students and TPO
+    
+    if (role === 'recruiter') {
+      // Recruiters need TPO approval
+      approvalStatus = 'pending';
+    } else if (role === 'admin') {
+      // Admins are auto-approved
+      approvalStatus = 'approved';
+    }
+
+    // Create user
+    const user = await User.create({
+      email,
+      passwordHash,
+      role,
+      organizationId,
+      approvalStatus,
+      ...cleanedProfileData
+    });
+
+    // If recruiter registration, notify TPOs of the same university
+    if (role === 'recruiter' && organizationId) {
+      await this.notifyTPOsOfNewRecruiter(user, organizationId);
+    }
+
+    // For recruiters requiring approval, return different response
+    if (role === 'recruiter') {
+      const { passwordHash: _, ...userWithoutPassword } = user.toJSON();
+      return {
+        user: userWithoutPassword,
+        tokens: null, // Don't provide tokens for pending approval
+        message: 'Registration successful. Your account is pending approval from the Training & Placement Officer. You will be notified once approved.'
+      };
+    }
+
+    // Generate tokens for approved users
+    const tokens = this.generateTokens(user.id);
+
+    // Return user without password
+    const { passwordHash: _, ...userWithoutPassword } = user.toJSON();
+
+    return {
+      user: userWithoutPassword,
+      tokens
+    };
   }
 
-  // Validate organization if provided
-  if (organizationId) {
-    const organization = await Organization.findByPk(organizationId);
-    if (!organization) {
-      throw new Error('Invalid organization');
+  async notifyTPOsOfNewRecruiter(recruiterUser, organizationId) {
+    try {
+      // Find the organization to get its details
+      const recruiterOrg = await Organization.findByPk(organizationId);
+      if (!recruiterOrg) return;
+
+      // Find all TPOs from university organizations to notify about new recruiter
+      const tpos = await User.findAll({
+        where: { 
+          role: 'tpo',
+          isActive: true,
+          approvalStatus: 'approved'
+        },
+        include: [
+          {
+            model: Organization,
+            as: 'organization',
+            where: { type: 'university' }
+          }
+        ]
+      });
+
+      // Create notifications for all TPOs
+      const notifications = tpos.map(tpo => ({
+        userId: tpo.id,
+        title: 'New Recruiter Registration',
+        message: `A new recruiter from ${recruiterOrg.name} (${recruiterUser.firstName} ${recruiterUser.lastName}) has registered and requires approval.`,
+        type: 'approval_request',
+        data: {
+          recruiterId: recruiterUser.id,
+          recruiterName: `${recruiterUser.firstName} ${recruiterUser.lastName}`,
+          recruiterEmail: recruiterUser.email,
+          organizationName: recruiterOrg.name,
+          organizationId: organizationId
+        }
+      }));
+
+      if (notifications.length > 0) {
+        await notificationService.createBulkNotifications(notifications);
+      }
+    } catch (error) {
+      console.error('Error notifying TPOs of new recruiter:', error);
+      // Don't throw error as this is not critical for registration
     }
   }
-
-  // Hash password
-  const passwordHash = await this.hashPassword(password);
-
-  // Clean up phone number - convert empty string to null
-  const cleanedProfileData = { ...profileData };
-  if (cleanedProfileData.phone === '') {
-    cleanedProfileData.phone = null;
-  }
-
-  // Create user
-  const user = await User.create({
-    email,
-    passwordHash,
-    role,
-    organizationId,
-    ...cleanedProfileData
-  });
-
-  // Generate tokens
-  const tokens = this.generateTokens(user.id);
-
-  // Return user without password
-  const { passwordHash: _, ...userWithoutPassword } = user.toJSON();
-
-  return {
-    user: userWithoutPassword,
-    tokens
-  };
-}
 
   async login(email, password) {
     // Find user with organization
@@ -107,6 +192,15 @@ class AuthService {
       throw new Error('Invalid credentials');
     }
 
+    // Check approval status for non-admin users
+    if (user.role !== 'admin' && user.approvalStatus !== 'approved') {
+      if (user.approvalStatus === 'pending') {
+        throw new Error('Your account is pending approval. Please wait for approval from your Training & Placement Officer.');
+      } else if (user.approvalStatus === 'rejected') {
+        throw new Error('Your account has been rejected. Please contact your Training & Placement Officer for more information.');
+      }
+    }
+
     // Update last login
     await user.update({ lastLogin: new Date() });
 
@@ -128,6 +222,11 @@ class AuthService {
     const user = await User.findByPk(decoded.userId);
     if (!user || !user.isActive) {
       throw new Error('User not found or inactive');
+    }
+
+    // Check approval status
+    if (user.role !== 'admin' && user.approvalStatus !== 'approved') {
+      throw new Error('User account is not approved');
     }
 
     return this.generateTokens(user.id);

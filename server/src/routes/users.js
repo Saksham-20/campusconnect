@@ -1,111 +1,27 @@
 // server/src/routes/users.js
 const express = require('express');
-const { body } = require('express-validator');
-const { authenticateToken } = require('../middleware/auth');
-const { requireRole, requireOwnership } = require('../middleware/rbac');
-const userController = require('../controllers/userController');
-
 const router = express.Router();
+const userController = require('../controllers/userController');
+const auth = require('../middleware/auth');
+const upload = require('../middleware/upload');
+const rbac = require('../middleware/rbac');
 
-/**
- * @swagger
- * /api/users/profile:
- *   get:
- *     summary: Get current user profile
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/profile', authenticateToken, userController.getProfile);
+// Protected routes (require authentication)
+router.use(auth);
 
-/**
- * @swagger
- * /api/users/profile:
- *   put:
- *     summary: Update user profile
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- */
-router.put('/profile', 
-  authenticateToken,
-  [
-    body('firstName').optional().trim().isLength({ min: 1, max: 100 }),
-    body('lastName').optional().trim().isLength({ min: 1, max: 100 }),
-    body('phone').optional().matches(/^[\+]?[1-9][\d]{0,15}$/)
-  ],
-  userController.updateProfile
-);
+// Profile routes (any authenticated user can access their own profile)
+router.get('/profile', userController.getProfile);
+router.put('/profile', userController.updateProfile);
 
-/**
- * @swagger
- * /api/users:
- *   get:
- *     summary: Get all users (admin only)
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/', 
-  authenticateToken, 
-  requireRole('admin', 'tpo'), 
-  userController.getAllUsers
-);
+// Admin-only routes for user management
+router.get('/admin/all', rbac(['admin']), userController.getAllUsers);
+router.get('/admin/stats', rbac(['admin']), userController.getUserStats);
+router.get('/admin/:userId', rbac(['admin']), userController.getUserById);
+router.put('/admin/:userId', rbac(['admin']), userController.updateUser);
+router.delete('/admin/:userId', rbac(['admin']), userController.deleteUser);
 
-/**
- * @swagger
- * /api/users/role/{role}:
- *   get:
- *     summary: Get users by role
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/role/:role', 
-  authenticateToken, 
-  requireRole('admin', 'tpo', 'recruiter'), 
-  userController.getUsersByRole
-);
-
-/**
- * @swagger
- * /api/users/top-candidates:
- *   get:
- *     summary: Get top candidates for recruiters
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/top-candidates', 
-  authenticateToken, 
-  requireRole('recruiter', 'admin'), 
-  userController.getTopCandidates
-);
-
-/**
- * @swagger
- * /api/users/{id}:
- *   get:
- *     summary: Get user by ID
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/:id', authenticateToken, userController.getProfile);
-
-/**
- * @swagger
- * /api/users/{id}/status:
- *   patch:
- *     summary: Toggle user status
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- */
-router.patch('/:id/status', 
-  authenticateToken, 
-  requireRole('admin'), 
-  userController.toggleUserStatus
-);
+// General user routes (with role-based access)
+router.get('/all', rbac(['admin', 'tpo', 'recruiter']), userController.getAllUsers);
+router.get('/:userId', userController.getUserById);
 
 module.exports = router;

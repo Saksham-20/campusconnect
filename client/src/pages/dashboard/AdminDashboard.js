@@ -1,5 +1,6 @@
 // client/src/pages/dashboard/AdminDashboard.js
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import statisticsService from '../../services/statistics';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import {
@@ -11,7 +12,8 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 
 const AdminDashboard = () => {
@@ -74,10 +76,10 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">
             Admin Dashboard
           </h1>
           <p className="text-gray-600 mt-2">
@@ -87,16 +89,16 @@ const AdminDashboard = () => {
 
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <div className="bg-white/90 backdrop-blur-md overflow-hidden shadow-lg rounded-2xl border border-white/20 hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <UsersIcon className="h-6 w-6 text-blue-600" />
+                  <UsersIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{stats.users.total || 0}</dd>
+                    <dd className="text-3xl font-bold text-gray-900">{stats.users.total || 0}</dd>
                     <dd className="text-sm text-gray-500">
                       +{stats.users.recentRegistrations || 0} this month
                     </dd>
@@ -106,16 +108,16 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <div className="bg-white/90 backdrop-blur-md overflow-hidden shadow-lg rounded-2xl border border-white/20 hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <BuildingOfficeIcon className="h-6 w-6 text-green-600" />
+                  <BuildingOfficeIcon className="h-8 w-8 text-green-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Organizations</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{stats.organizations.total || 0}</dd>
+                    <dd className="text-3xl font-bold text-gray-900">{stats.organizations.total || 0}</dd>
                     <dd className="text-sm text-gray-500">
                       Universities & Companies
                     </dd>
@@ -125,16 +127,16 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <div className="bg-white/90 backdrop-blur-md overflow-hidden shadow-lg rounded-2xl border border-white/20 hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <BriefcaseIcon className="h-6 w-6 text-purple-600" />
+                  <BriefcaseIcon className="h-8 w-8 text-purple-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Total Jobs</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{stats.jobs.total || 0}</dd>
+                    <dd className="text-3xl font-bold text-gray-900">{stats.jobs.total || 0}</dd>
                     <dd className="text-sm text-gray-500">
                       +{stats.jobs.recentPostings || 0} this week
                     </dd>
@@ -144,16 +146,16 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <div className="bg-white/90 backdrop-blur-md overflow-hidden shadow-lg rounded-2xl border border-white/20 hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <DocumentTextIcon className="h-6 w-6 text-orange-600" />
+                  <DocumentTextIcon className="h-8 w-8 text-orange-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Applications</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{stats.applications.total || 0}</dd>
+                    <dd className="text-3xl font-bold text-gray-900">{stats.applications.total || 0}</dd>
                     <dd className="text-sm text-gray-500">
                       Total submissions
                     </dd>
@@ -167,7 +169,7 @@ const AdminDashboard = () => {
         {/* Detailed Statistics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* User Statistics */}
-          <div className="bg-white shadow rounded-lg">
+          <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-medium text-gray-900 flex items-center">
                 <UsersIcon className="h-5 w-5 text-blue-600 mr-2" />
@@ -201,7 +203,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Job Statistics */}
-          <div className="bg-white shadow rounded-lg">
+          <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-medium text-gray-900 flex items-center">
                 <BriefcaseIcon className="h-5 w-5 text-purple-600 mr-2" />
@@ -242,7 +244,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white shadow rounded-lg">
+        <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20 mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <ChartBarIcon className="h-5 w-5 text-green-600 mr-2" />
@@ -253,7 +255,7 @@ const AdminDashboard = () => {
             {stats.recentActivity?.length > 0 ? (
               <div className="space-y-4">
                 {stats.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors duration-200">
                     <div className="flex items-center">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                       <div>
@@ -289,50 +291,53 @@ const AdminDashboard = () => {
         </div>
 
         {/* Management Links */}
-        <div className="bg-white shadow rounded-lg mt-8">
+        <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">System Management</h2>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <a
-                href="/admin/users"
-                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Link
+                to="/admin/users"
+                className="group p-6 border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="flex items-center">
-                  <UsersIcon className="h-8 w-8 text-blue-600 mr-3" />
+                  <UsersIcon className="h-8 w-8 text-blue-600 mr-4 group-hover:scale-110 transition-transform duration-200" />
                   <div>
-                    <h3 className="font-medium">Manage Users</h3>
-                    <p className="text-sm text-gray-600">View and manage all users</p>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-700">Manage Users</h3>
+                    <p className="text-sm text-gray-600 mt-1">View and manage all users</p>
                   </div>
+                  <ArrowTopRightOnSquareIcon className="h-5 w-5 text-gray-400 ml-auto group-hover:text-blue-600" />
                 </div>
-              </a>
+              </Link>
 
-              <a
-                href="/admin/organizations"
-                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              <Link
+                to="/admin/organizations"
+                className="group p-6 border-2 border-gray-200 rounded-xl hover:border-green-300 hover:bg-green-50 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="flex items-center">
-                  <BuildingOfficeIcon className="h-8 w-8 text-green-600 mr-3" />
+                  <BuildingOfficeIcon className="h-8 w-8 text-green-600 mr-4 group-hover:scale-110 transition-transform duration-200" />
                   <div>
-                    <h3 className="font-medium">Organizations</h3>
-                    <p className="text-sm text-gray-600">Manage universities and companies</p>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-green-700">Organizations</h3>
+                    <p className="text-sm text-gray-600 mt-1">Manage universities and companies</p>
                   </div>
+                  <ArrowTopRightOnSquareIcon className="h-5 w-5 text-gray-400 ml-auto group-hover:text-green-600" />
                 </div>
-              </a>
+              </Link>
 
-              <a
-                href="/admin/jobs"
-                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              <Link
+                to="/admin/jobs"
+                className="group p-6 border-2 border-gray-200 rounded-xl hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="flex items-center">
-                  <BriefcaseIcon className="h-8 w-8 text-purple-600 mr-3" />
+                  <BriefcaseIcon className="h-8 w-8 text-purple-600 mr-4 group-hover:scale-110 transition-transform duration-200" />
                   <div>
-                    <h3 className="font-medium">Job Postings</h3>
-                    <p className="text-sm text-gray-600">Monitor all job postings</p>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-purple-700">Job Postings</h3>
+                    <p className="text-sm text-gray-600 mt-1">Monitor all job postings</p>
                   </div>
+                  <ArrowTopRightOnSquareIcon className="h-5 w-5 text-gray-400 ml-auto group-hover:text-purple-600" />
                 </div>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

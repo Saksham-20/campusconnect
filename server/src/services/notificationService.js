@@ -1,5 +1,6 @@
 // server/src/services/notificationService.js
 const { Notification, User, Application, Job, Organization } = require('../models');
+const { Op } = require('sequelize');
 const emailService = require('./emailService');
 
 class NotificationService {
@@ -17,6 +18,27 @@ class NotificationService {
       return notification;
     } catch (error) {
       console.error('Error creating notification:', error);
+      throw error;
+    }
+  }
+
+  async createBulkNotifications(notificationsData) {
+    try {
+      const notifications = notificationsData.map(notification => ({
+        userId: notification.userId,
+        title: notification.title,
+        message: notification.message,
+        notificationType: notification.type || 'general',
+        metadata: notification.data || {},
+        priority: notification.priority || 'medium',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }));
+
+      await Notification.bulkCreate(notifications);
+      return notifications;
+    } catch (error) {
+      console.error('Error creating bulk notifications:', error);
       throw error;
     }
   }

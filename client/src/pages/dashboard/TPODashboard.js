@@ -15,7 +15,9 @@ import {
   ClockIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  ChartPieIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 
 const TPODashboard = () => {
@@ -86,29 +88,41 @@ const TPODashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            TPO Dashboard - {user?.organization?.name}
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Comprehensive placement tracking and student analytics
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">
+                TPO Dashboard - {user?.organization?.name}
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Comprehensive placement tracking and student analytics
+              </p>
+            </div>
+            <Link
+              to="/tpo/analytics"
+              className="group inline-flex items-center px-6 py-3 border border-transparent rounded-xl text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <ChartPieIcon className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-200" />
+              Advanced Analytics
+              <ArrowTopRightOnSquareIcon className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+            </Link>
+          </div>
         </div>
 
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <div className="bg-white/90 backdrop-blur-md overflow-hidden shadow-lg rounded-2xl border border-white/20 hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <UserGroupIcon className="h-6 w-6 text-blue-600" />
+                  <UserGroupIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Total Students</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{dashboardData.students.total || 0}</dd>
+                    <dd className="text-3xl font-bold text-gray-900">{dashboardData.students.total || 0}</dd>
                     <dd className="text-sm text-gray-500">
                       Enrolled students
                     </dd>
@@ -118,16 +132,16 @@ const TPODashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <div className="bg-white/90 backdrop-blur-md overflow-hidden shadow-lg rounded-2xl border border-white/20 hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CheckCircleIcon className="h-6 w-6 text-green-600" />
+                  <CheckCircleIcon className="h-8 w-8 text-green-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Placed Students</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{dashboardData.students.placed || 0}</dd>
+                    <dd className="text-3xl font-bold text-gray-900">{dashboardData.students.placed || 0}</dd>
                     <dd className="text-sm text-gray-500">
                       {dashboardData.students.placementRate || 0}% placement rate
                     </dd>
@@ -137,16 +151,16 @@ const TPODashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <div className="bg-white/90 backdrop-blur-md overflow-hidden shadow-lg rounded-2xl border border-white/20 hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <BriefcaseIcon className="h-6 w-6 text-purple-600" />
+                  <BriefcaseIcon className="h-8 w-8 text-purple-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Active Jobs</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{dashboardData.jobs.active || 0}</dd>
+                    <dd className="text-3xl font-bold text-gray-900">{dashboardData.jobs.active || 0}</dd>
                     <dd className="text-sm text-gray-500">
                       {dashboardData.jobs.total || 0} total jobs
                     </dd>
@@ -156,16 +170,16 @@ const TPODashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <div className="bg-white/90 backdrop-blur-md overflow-hidden shadow-lg rounded-2xl border border-white/20 hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <DocumentTextIcon className="h-6 w-6 text-orange-600" />
+                  <DocumentTextIcon className="h-8 w-8 text-orange-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Applications</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{dashboardData.applications.total || 0}</dd>
+                    <dd className="text-3xl font-bold text-gray-900">{dashboardData.applications.total || 0}</dd>
                     <dd className="text-sm text-gray-500">
                       Total submissions
                     </dd>
@@ -179,7 +193,7 @@ const TPODashboard = () => {
         {/* Detailed Analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Placement Statistics */}
-          <div className="bg-white shadow rounded-lg">
+          <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-medium text-gray-900 flex items-center">
                 <ChartBarIcon className="h-5 w-5 text-green-600 mr-2" />
@@ -219,7 +233,7 @@ const TPODashboard = () => {
           </div>
 
           {/* Job Status Distribution */}
-          <div className="bg-white shadow rounded-lg">
+          <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-medium text-gray-900 flex items-center">
                 <BriefcaseIcon className="h-5 w-5 text-purple-600 mr-2" />
@@ -260,18 +274,26 @@ const TPODashboard = () => {
         </div>
 
         {/* Company Application Analytics */}
-        <div className="bg-white shadow rounded-lg mb-8">
+        <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20 mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <BuildingOfficeIcon className="h-5 w-5 text-blue-600 mr-2" />
-              Company Application Analytics
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                <BuildingOfficeIcon className="h-5 w-5 text-blue-600 mr-2" />
+                Company Application Analytics
+              </h2>
+              <Link
+                to="/tpo/analytics"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
+              >
+                View Detailed Analytics →
+              </Link>
+            </div>
           </div>
           <div className="p-6">
             {dashboardData.applications.byCompany?.length > 0 ? (
               <div className="space-y-4">
                 {dashboardData.applications.byCompany.slice(0, 10).map((companyStat, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors duration-200">
                     <div className="flex items-center">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                       <div>
@@ -304,7 +326,7 @@ const TPODashboard = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white shadow rounded-lg mb-8">
+        <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20 mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <ChartBarIcon className="h-5 w-5 text-green-600 mr-2" />
@@ -315,7 +337,7 @@ const TPODashboard = () => {
             {dashboardData.recentActivity?.length > 0 ? (
               <div className="space-y-4">
                 {dashboardData.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors duration-200">
                     <div className="flex items-center">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                       <div>
@@ -353,49 +375,49 @@ const TPODashboard = () => {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="bg-white shadow rounded-lg p-6">
+            <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20 p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link
                   to="/jobs/new"
-                  className="flex items-center p-4 text-sm text-gray-700 rounded-lg border hover:bg-gray-50 transition-colors"
+                  className="group flex items-center p-4 text-sm text-gray-700 rounded-xl border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 transform hover:-translate-y-1"
                 >
-                  <BriefcaseIcon className="h-6 w-6 text-purple-600 mr-3" />
+                  <BriefcaseIcon className="h-6 w-6 text-purple-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
                   <div>
-                    <h3 className="font-medium">Post New Job</h3>
+                    <h3 className="font-medium group-hover:text-purple-700">Post New Job</h3>
                     <p className="text-sm text-gray-600">Create a new job posting</p>
                   </div>
                 </Link>
                 
                 <Link
                   to="/events/new"
-                  className="flex items-center p-4 text-sm text-gray-700 rounded-lg border hover:bg-gray-50 transition-colors"
+                  className="group flex items-center p-4 text-sm text-gray-700 rounded-xl border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 transform hover:-translate-y-1"
                 >
-                  <CalendarIcon className="h-6 w-6 text-blue-600 mr-3" />
+                  <CalendarIcon className="h-6 w-6 text-blue-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
                   <div>
-                    <h3 className="font-medium">Schedule Event</h3>
+                    <h3 className="font-medium group-hover:text-blue-700">Schedule Event</h3>
                     <p className="text-sm text-gray-600">Create a new campus event</p>
                   </div>
                 </Link>
                 
                 <Link
-                  to="/students"
-                  className="flex items-center p-4 text-sm text-gray-700 rounded-lg border hover:bg-gray-50 transition-colors"
+                  to="/tpo/analytics"
+                  className="group flex items-center p-4 text-sm text-gray-700 rounded-xl border-2 border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200 transform hover:-translate-y-1"
                 >
-                  <AcademicCapIcon className="h-6 w-6 text-green-600 mr-3" />
+                  <ChartPieIcon className="h-6 w-6 text-green-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
                   <div>
-                    <h3 className="font-medium">Manage Students</h3>
-                    <p className="text-sm text-gray-600">View and manage student profiles</p>
+                    <h3 className="font-medium group-hover:text-green-700">Analytics Dashboard</h3>
+                    <p className="text-sm text-gray-600">Advanced analytics & insights</p>
                   </div>
                 </Link>
                 
                 <Link
                   to="/applications"
-                  className="flex items-center p-4 text-sm text-gray-700 rounded-lg border hover:bg-gray-50 transition-colors"
+                  className="group flex items-center p-4 text-sm text-gray-700 rounded-xl border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all duration-200 transform hover:-translate-y-1"
                 >
-                  <DocumentTextIcon className="h-6 w-6 text-orange-600 mr-3" />
+                  <DocumentTextIcon className="h-6 w-6 text-orange-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
                   <div>
-                    <h3 className="font-medium">View Applications</h3>
+                    <h3 className="font-medium group-hover:text-orange-700">View Applications</h3>
                     <p className="text-sm text-gray-600">Monitor all applications</p>
                   </div>
                 </Link>
@@ -404,7 +426,7 @@ const TPODashboard = () => {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white shadow rounded-lg p-6">
+            <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl border border-white/20 p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">Event Summary</h2>
               <div className="text-center">
                 <CalendarIcon className="mx-auto h-12 w-12 text-blue-600 mb-2" />
