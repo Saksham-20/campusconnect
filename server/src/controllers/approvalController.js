@@ -1,5 +1,6 @@
 const { User, Organization, RecruiterProfile } = require('../models');
 const { Op } = require('sequelize');
+const notificationService = require('../services/notificationService');
 
 class ApprovalController {
   // Get pending approvals for TPO
@@ -33,14 +34,11 @@ class ApprovalController {
           order: [['createdAt', 'ASC']]
         }),
 
-        // Get pending recruiter users
+        // Get pending recruiter users - TPO can approve any recruiter
         User.findAll({
           where: {
             role: 'recruiter',
-            approvalStatus: 'pending',
-            organizationId: {
-              [Op.ne]: organizationId // Exclude TPO's own organization
-            }
+            approvalStatus: 'pending'
           },
           include: [
             {
@@ -102,16 +100,15 @@ class ApprovalController {
       }
 
       const approvalStatus = action === 'approve' ? 'approved' : 'rejected';
-      const updateData = {
+
+      await organization.update({
         approvalStatus,
         approvedBy: approverId,
         approvedAt: new Date(),
-        approvalNotes: notes || null
-      };
+        approvalNotes: notes
+      });
 
-      await organization.update(updateData);
-
-      // If approved, also approve all recruiter users in the organization
+      // If organization approved, also approve all associated recruiters
       if (action === 'approve') {
         await User.update(
           {
@@ -121,7 +118,24 @@ class ApprovalController {
           },
           {
             where: {
-              organizationId,
+              organizationId: organizationId,
+              role: 'recruiter',
+              approvalStatus: 'pending'
+            }
+          }
+        );
+      } else {
+        // If organization rejected, reject associated recruiters
+        await User.update(
+          {
+            approvalStatus: 'rejected',
+            approvedBy: approverId,
+            approvedAt: new Date(),
+            approvalNotes: notes
+          },
+          {
+            where: {
+              organizationId: organizationId,
               role: 'recruiter',
               approvalStatus: 'pending'
             }
@@ -131,11 +145,10 @@ class ApprovalController {
 
       res.json({
         message: `Organization ${action}d successfully`,
-        organization: {
-          id: organization.id,
-          name: organization.name,
+        data: {
           approvalStatus: organization.approvalStatus,
-          approvedAt: organization.approvedAt
+          approvedBy: approverId,
+          approvedAt: new Date()
         }
       });
     } catch (error) {
@@ -144,12 +157,12 @@ class ApprovalController {
     }
   }
 
-  // Approve/reject individual recruiter
-  async approveRecruiter(req, res, next) {
+  // Approve/reject recruiter user
+  async approveUser(req, res, next) {
     try {
       const { userId } = req.params;
       const { action, notes } = req.body; // action: 'approve' or 'reject'
-      const { id: approverId } = req.user;
+      const { id: approverId, firstName: approverName, lastName: approverLastName } = req.user;
 
       if (!['approve', 'reject'].includes(action)) {
         return res.status(400).json({
@@ -162,8 +175,7 @@ class ApprovalController {
         include: [
           {
             model: Organization,
-            as: 'organization',
-            attributes: ['id', 'name', 'type']
+            as: 'organization'
           }
         ]
       });
@@ -175,13 +187,6 @@ class ApprovalController {
         });
       }
 
-      if (user.role !== 'recruiter') {
-        return res.status(400).json({
-          error: 'Invalid User Role',
-          message: 'User is not a recruiter'
-        });
-      }
-
       if (user.approvalStatus !== 'pending') {
         return res.status(400).json({
           error: 'Invalid Status',
@@ -190,29 +195,51 @@ class ApprovalController {
       }
 
       const approvalStatus = action === 'approve' ? 'approved' : 'rejected';
-      const updateData = {
+
+      await user.update({
         approvalStatus,
         approvedBy: approverId,
         approvedAt: new Date(),
-        approvalNotes: notes || null
-      };
+        approvalNotes: notes
+      });
 
-      await user.update(updateData);
+      // Send notification to the recruiter
+      try {
+        const notificationTitle = action === 'approve' ? 
+          'Account Approved!' : 
+          'Account Status Update';
+        
+        const notificationMessage = action === 'approve' ? 
+          `Congratulations! Your account has been approved by ${approverName} ${approverLastName}. You can now login and start posting jobs.` :
+          `Your account application has been reviewed. ${notes ? `Note: ${notes}` : 'Please contact the TPO for more information.'}`;
+
+        await notificationService.createNotification(
+          user.id,
+          notificationTitle,
+          notificationMessage,
+          'approval_update',
+          {
+            approvalStatus,
+            approvedBy: approverId,
+            notes
+          },
+          action === 'approve' ? 'high' : 'medium'
+        );
+      } catch (notificationError) {
+        console.error('Error creating approval notification:', notificationError);
+        // Don't fail the approval process if notification fails
+      }
 
       res.json({
-        message: `Recruiter ${action}d successfully`,
-        user: {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          organization: user.organization?.name,
+        message: `User ${action}d successfully`,
+        data: {
           approvalStatus: user.approvalStatus,
-          approvedAt: user.approvedAt
+          approvedBy: approverId,
+          approvedAt: new Date()
         }
       });
     } catch (error) {
-      console.error('Error in approveRecruiter:', error);
+      console.error('Error in approveUser:', error);
       next(error);
     }
   }

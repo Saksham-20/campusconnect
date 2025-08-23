@@ -1,43 +1,191 @@
 // server/src/controllers/userController.js
-const { User, StudentProfile, RecruiterProfile, Organization, Achievement } = require('../models');
-const { validationResult } = require('express-validator');
+const { User, Organization, StudentProfile, RecruiterProfile } = require('../models');
 const { Op } = require('sequelize');
-
-// Helper functions outside the class
-const sanitizeNumericField = (value) => {
-  if (value === '' || value === null || value === undefined || value === 'null') {
-    return null;
-  }
-  // Convert to number and validate
-  const numValue = parseFloat(value);
-  return isNaN(numValue) ? null : numValue;
-};
-
-const sanitizeProfileData = (profileData) => {
-  const sanitized = { ...profileData };
-  
-  // Sanitize numeric fields
-  if ('cgpa' in sanitized) {
-    sanitized.cgpa = sanitizeNumericField(sanitized.cgpa);
-  }
-  if ('percentage' in sanitized) {
-    sanitized.percentage = sanitizeNumericField(sanitized.percentage);
-  }
-  if ('yearOfStudy' in sanitized) {
-    sanitized.yearOfStudy = sanitizeNumericField(sanitized.yearOfStudy);
-  }
-  if ('graduationYear' in sanitized) {
-    sanitized.graduationYear = sanitizeNumericField(sanitized.graduationYear);
-  }
-  
-  return sanitized;
-};
+const bcrypt = require('bcryptjs');
+const notificationService = require('../services/notificationService');
 
 class UserController {
-
+  // Get current user profile
   async getProfile(req, res, next) {
     try {
-      const userId = req.params.id || req.user.id;
+      const userId = req.user.id;
+      
+      const user = await User.findByPk(userId, {
+        include: [
+          {
+            model: Organization,
+            as: 'organization',
+            attributes: ['id', 'name', 'type', 'logoUrl']
+          },
+          {
+            model: StudentProfile,
+            as: 'studentProfile'
+          },
+          {
+            model: RecruiterProfile,
+            as: 'recruiterProfile'
+          }
+        ],
+        attributes: { exclude: ['passwordHash'] }
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          error: 'User Not Found',
+          message: 'User profile not found'
+        });
+      }
+
+      res.json({ user });
+    } catch (error) {
+      console.error('Error in getProfile:', error);
+      next(error);
+    }
+  }
+
+  // Update user profile
+  async updateProfile(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const updates = req.body;
+
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({
+          error: 'User Not Found',
+          message: 'User not found'
+        });
+      }
+
+      // Remove fields that shouldn't be updated directly
+      const { passwordHash, role, organizationId, approvalStatus, ...allowedUpdates } = updates;
+
+      await user.update(allowedUpdates);
+
+      // Fetch updated user with associations
+      const updatedUser = await User.findByPk(userId, {
+        include: [
+          {
+            model: Organization,
+            as: 'organization',
+            attributes: ['id', 'name', 'type', 'logoUrl']
+          },
+          {
+            model: StudentProfile,
+            as: 'studentProfile'
+          },
+          {
+            model: RecruiterProfile,
+            as: 'recruiterProfile'
+          }
+        ],
+        attributes: { exclude: ['passwordHash'] }
+      });
+
+      res.json({
+        message: 'Profile updated successfully',
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error('Error in updateProfile:', error);
+      next(error);
+    }
+  }
+
+  // Admin: Get all users with filtering and pagination
+  async getAllUsers(req, res, next) {
+    try {
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          error: 'Access Denied',
+          message: 'Only admins can access this resource'
+        });
+      }
+
+      const { 
+        page = 1, 
+        limit = 20, 
+        role, 
+        organizationId, 
+        approvalStatus, 
+        search,
+        sortBy = 'createdAt',
+        sortOrder = 'DESC'
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const where = {};
+
+      // Apply filters
+      if (role) where.role = role;
+      if (organizationId) where.organizationId = organizationId;
+      if (approvalStatus) where.approvalStatus = approvalStatus;
+      
+      if (search) {
+        where[Op.or] = [
+          { firstName: { [Op.iLike]: `%${search}%` } },
+          { lastName: { [Op.iLike]: `%${search}%` } },
+          { email: { [Op.iLike]: `%${search}%` } }
+        ];
+      }
+
+      const { count, rows } = await User.findAndCountAll({
+        where,
+        include: [
+          {
+            model: Organization,
+            as: 'organization',
+            attributes: ['id', 'name', 'type', 'logoUrl']
+          },
+          {
+            model: StudentProfile,
+            as: 'studentProfile',
+            attributes: ['course', 'branch', 'yearOfStudy', 'cgpa']
+          },
+          {
+            model: RecruiterProfile,
+            as: 'recruiterProfile',
+            attributes: ['designation', 'department', 'experience']
+          }
+        ],
+        attributes: { exclude: ['passwordHash'] },
+        offset: parseInt(offset),
+        limit: parseInt(limit),
+        order: [[sortBy, sortOrder.toUpperCase()]]
+      });
+
+      const totalPages = Math.ceil(count / limit);
+
+      res.json({
+        message: 'Users retrieved successfully',
+        users: rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          totalUsers: count,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
+      });
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      next(error);
+    }
+  }
+
+  // Admin: Get user by ID with full details
+  async getUserById(req, res, next) {
+    try {
+      // Check if user is admin or accessing own profile
+      if (req.user.role !== 'admin' && req.user.id !== parseInt(req.params.userId)) {
+        return res.status(403).json({
+          error: 'Access Denied',
+          message: 'You can only access your own profile'
+        });
+      }
+
+      const userId = req.params.userId;
       
       const user = await User.findByPk(userId, {
         include: [
@@ -52,11 +200,6 @@ class UserController {
           {
             model: RecruiterProfile,
             as: 'recruiterProfile'
-          },
-          {
-            model: Achievement,
-            as: 'achievements',
-            order: [['issueDate', 'DESC']]
           }
         ],
         attributes: { exclude: ['passwordHash'] }
@@ -65,33 +208,34 @@ class UserController {
       if (!user) {
         return res.status(404).json({
           error: 'User Not Found',
-          message: 'User profile not found'
+          message: 'User not found'
         });
       }
 
       res.json({
-        message: 'Profile retrieved successfully',
+        message: 'User retrieved successfully',
         user
       });
     } catch (error) {
+      console.error('Error in getUserById:', error);
       next(error);
     }
   }
 
-  async updateProfile(req, res, next) {
+  // Admin: Update user (including role, status, etc.)
+  async updateUser(req, res, next) {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          error: 'Validation Error',
-          details: errors.array()
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          error: 'Access Denied',
+          message: 'Only admins can perform this action'
         });
       }
 
-      const userId = req.params.id || req.user.id;
-      const { firstName, lastName, phone, profilePicture, ...profileData } = req.body;
+      const userId = req.params.userId;
+      const updates = req.body;
 
-      // Update user basic info
       const user = await User.findByPk(userId);
       if (!user) {
         return res.status(404).json({
@@ -100,132 +244,100 @@ class UserController {
         });
       }
 
-      await user.update({
-        firstName,
-        lastName,
-        phone,
-        profilePicture
-      });
+      // Don't allow admins to change their own role or status to prevent lockout
+      if (user.id === req.user.id && (updates.role || updates.approvalStatus || updates.isActive === false)) {
+        return res.status(400).json({
+          error: 'Invalid Operation',
+          message: 'You cannot change your own role, approval status, or deactivate your account'
+        });
+      }
 
-      // Update role-specific profile
-      if (user.role === 'student' && profileData) {
-        // SANITIZE PROFILE DATA HERE - This is the key fix!
-        const sanitizedProfileData = sanitizeProfileData(profileData);
-        
-        let studentProfile = await StudentProfile.findOne({ where: { userId } });
-        
-        if (studentProfile) {
-          await studentProfile.update(sanitizedProfileData);
-        } else {
-          await StudentProfile.create({
-            userId,
-            ...sanitizedProfileData
-          });
-        }
-      } else if (user.role === 'recruiter' && profileData) {
-        let recruiterProfile = await RecruiterProfile.findOne({ where: { userId } });
-        
-        if (recruiterProfile) {
-          await recruiterProfile.update(profileData);
-        } else {
-          await RecruiterProfile.create({
-            userId,
-            ...profileData
-          });
+      // Handle password updates
+      if (updates.password) {
+        const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+        updates.passwordHash = await bcrypt.hash(updates.password, saltRounds);
+        delete updates.password;
+      }
+
+      // Track status changes for notifications
+      const oldApprovalStatus = user.approvalStatus;
+      const newApprovalStatus = updates.approvalStatus;
+
+      await user.update(updates);
+
+      // Send notification if approval status changed
+      if (newApprovalStatus && newApprovalStatus !== oldApprovalStatus) {
+        try {
+          const notificationTitle = newApprovalStatus === 'approved' ? 
+            'Account Approved!' : 
+            newApprovalStatus === 'rejected' ? 'Account Status Update' : 'Account Status Changed';
+          
+          const notificationMessage = newApprovalStatus === 'approved' ? 
+            `Your account has been approved by an administrator. You can now access the platform.` :
+            newApprovalStatus === 'rejected' ? 
+            `Your account has been reviewed and requires additional information. Please contact support.` :
+            `Your account status has been updated to ${newApprovalStatus}.`;
+
+          await notificationService.createNotification(
+            user.id,
+            notificationTitle,
+            notificationMessage,
+            'admin_update',
+            {
+              approvalStatus: newApprovalStatus,
+              updatedBy: req.user.id
+            },
+            newApprovalStatus === 'approved' ? 'high' : 'medium'
+          );
+        } catch (notificationError) {
+          console.error('Error creating admin update notification:', notificationError);
         }
       }
 
-      // Return updated user
+      // Fetch updated user with associations
       const updatedUser = await User.findByPk(userId, {
         include: [
-          { model: Organization, as: 'organization' },
-          { model: StudentProfile, as: 'studentProfile' },
-          { model: RecruiterProfile, as: 'recruiterProfile' }
+          {
+            model: Organization,
+            as: 'organization',
+            attributes: ['id', 'name', 'type', 'logoUrl']
+          },
+          {
+            model: StudentProfile,
+            as: 'studentProfile'
+          },
+          {
+            model: RecruiterProfile,
+            as: 'recruiterProfile'
+          }
         ],
         attributes: { exclude: ['passwordHash'] }
       });
 
       res.json({
-        message: 'Profile updated successfully',
+        message: 'User updated successfully',
         user: updatedUser
       });
     } catch (error) {
+      console.error('Error in updateUser:', error);
       next(error);
     }
   }
 
-  async getAllUsers(req, res, next) {
+  // Admin: Delete user (soft delete by deactivating)
+  async deleteUser(req, res, next) {
     try {
-      const { page = 1, limit = 10, role, organizationId, isActive } = req.query;
-      const offset = (page - 1) * limit;
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          error: 'Access Denied',
+          message: 'Only admins can perform this action'
+        });
+      }
 
-      const whereClause = {};
-      if (role) whereClause.role = role;
-      if (organizationId) whereClause.organizationId = organizationId;
-      if (isActive !== undefined) whereClause.isActive = isActive === 'true';
+      const userId = req.params.userId;
 
-      const { count, rows: users } = await User.findAndCountAll({
-        where: whereClause,
-        include: [
-          { model: Organization, as: 'organization' },
-          { model: StudentProfile, as: 'studentProfile' },
-          { model: RecruiterProfile, as: 'recruiterProfile' }
-        ],
-        attributes: { exclude: ['passwordHash'] },
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['createdAt', 'DESC']]
-      });
-
-      res.json({
-        message: 'Users retrieved successfully',
-        users,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(count / limit),
-          totalUsers: count,
-          hasMore: offset + users.length < count
-        }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async getUsersByRole(req, res, next) {
-    try {
-      const { role } = req.params;
-      const { organizationId } = req.query;
-
-      const whereClause = { role, isActive: true };
-      if (organizationId) whereClause.organizationId = organizationId;
-
-      const users = await User.findAll({
-        where: whereClause,
-        include: [
-          { model: Organization, as: 'organization' },
-          { model: StudentProfile, as: 'studentProfile' },
-          { model: RecruiterProfile, as: 'recruiterProfile' }
-        ],
-        attributes: { exclude: ['passwordHash'] },
-        order: [['firstName', 'ASC']]
-      });
-
-      res.json({
-        message: `${role}s retrieved successfully`,
-        users
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async toggleUserStatus(req, res, next) {
-    try {
-      const { id } = req.params;
-      const { isActive } = req.body;
-
-      const user = await User.findByPk(id);
+      const user = await User.findByPk(userId);
       if (!user) {
         return res.status(404).json({
           error: 'User Not Found',
@@ -233,30 +345,11 @@ class UserController {
         });
       }
 
-      await user.update({ isActive });
-
-      res.json({
-        message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
-        user: {
-          id: user.id,
-          email: user.email,
-          isActive: user.isActive
-        }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async deleteUser(req, res, next) {
-    try {
-      const { id } = req.params;
-
-      const user = await User.findByPk(id);
-      if (!user) {
-        return res.status(404).json({
-          error: 'User Not Found',
-          message: 'User not found'
+      // Prevent admins from deleting themselves
+      if (user.id === req.user.id) {
+        return res.status(400).json({
+          error: 'Invalid Operation',
+          message: 'You cannot delete your own account'
         });
       }
 
@@ -264,132 +357,74 @@ class UserController {
       await user.update({ isActive: false });
 
       res.json({
-        message: 'User deleted successfully'
+        message: 'User deactivated successfully'
       });
     } catch (error) {
+      console.error('Error in deleteUser:', error);
       next(error);
     }
   }
 
-  async uploadProfilePicture(req, res, next) {
+  // Admin: Get user statistics
+  async getUserStats(req, res, next) {
     try {
-      if (!req.file) {
-        return res.status(400).json({
-          error: 'No File',
-          message: 'Please select an image file to upload'
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          error: 'Access Denied',
+          message: 'Only admins can access this resource'
         });
       }
 
-      const userId = req.user.id;
-      const fileService = require('../services/fileService');
-      
-      const fileName = `profile_${userId}_${Date.now()}.${req.file.originalname.split('.').pop()}`;
-      const filePath = await fileService.saveFile(req.file.buffer, fileName, req.file.mimetype);
+      const [roleStats, statusStats, organizationStats] = await Promise.all([
+        // Users by role
+        User.findAll({
+          attributes: [
+            'role',
+            [User.sequelize.fn('COUNT', User.sequelize.col('id')), 'count']
+          ],
+          group: ['role'],
+          raw: true
+        }),
 
-      // Update user profile picture
-      await User.update(
-        { profilePicture: filePath },
-        { where: { id: userId } }
-      );
+        // Users by approval status
+        User.findAll({
+          attributes: [
+            'approvalStatus',
+            [User.sequelize.fn('COUNT', User.sequelize.col('id')), 'count']
+          ],
+          group: ['approvalStatus'],
+          raw: true
+        }),
 
-      res.json({
-        message: 'Profile picture uploaded successfully',
-        profilePicture: filePath
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async searchUsers(req, res, next) {
-    try {
-      const { q, role, organizationId } = req.query;
-
-      if (!q || q.length < 2) {
-        return res.status(400).json({
-          error: 'Invalid Query',
-          message: 'Search query must be at least 2 characters long'
-        });
-      }
-
-      const whereClause = {
-        isActive: true,
-        [Op.or]: [
-          { firstName: { [Op.iLike]: `%${q}%` } },
-          { lastName: { [Op.iLike]: `%${q}%` } },
-          { email: { [Op.iLike]: `%${q}%` } }
-        ]
-      };
-
-      if (role) whereClause.role = role;
-      if (organizationId) whereClause.organizationId = organizationId;
-
-      const users = await User.findAll({
-        where: whereClause,
-        include: [
-          { model: Organization, as: 'organization' },
-          { model: StudentProfile, as: 'studentProfile' },
-          { model: RecruiterProfile, as: 'recruiterProfile' }
-        ],
-        attributes: { exclude: ['passwordHash'] },
-        limit: 20,
-        order: [['firstName', 'ASC']]
-      });
+        // Users by organization type
+        User.findAll({
+          include: [
+            {
+              model: Organization,
+              as: 'organization',
+              attributes: []
+            }
+          ],
+          attributes: [
+            [User.sequelize.col('organization.type'), 'organizationType'],
+            [User.sequelize.fn('COUNT', User.sequelize.col('User.id')), 'count']
+          ],
+          group: ['organization.type'],
+          raw: true
+        })
+      ]);
 
       res.json({
-        message: 'Search results retrieved successfully',
-        users,
-        query: q
+        message: 'User statistics retrieved successfully',
+        stats: {
+          byRole: roleStats,
+          byApprovalStatus: statusStats,
+          byOrganizationType: organizationStats
+        }
       });
     } catch (error) {
-      next(error);
-    }
-  }
-
-  async getTopCandidates(req, res, next) {
-    try {
-      const { limit = 10, organizationId } = req.query;
-      
-      // For recruiters, only show candidates from their organization
-      const targetOrgId = organizationId || req.user.organizationId;
-      
-      if (!targetOrgId) {
-        return res.status(400).json({
-          error: 'Organization Required',
-          message: 'Organization ID is required'
-        });
-      }
-
-      const candidates = await User.findAll({
-        where: {
-          role: 'student',
-          isActive: true,
-          organizationId: targetOrgId
-        },
-        include: [
-          {
-            model: StudentProfile,
-            as: 'studentProfile',
-            required: false // Make it optional so we get students even without profiles
-          },
-          {
-            model: Organization,
-            as: 'organization'
-          }
-        ],
-        attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
-        limit: parseInt(limit),
-        order: [
-          ['studentProfile', 'cgpa', 'DESC NULLS LAST'],
-          ['firstName', 'ASC']
-        ]
-      });
-
-      res.json({
-        message: 'Top candidates retrieved successfully',
-        candidates
-      });
-    } catch (error) {
+      console.error('Error in getUserStats:', error);
       next(error);
     }
   }

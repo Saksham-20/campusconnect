@@ -22,6 +22,14 @@ const authReducer = (state, action) => {
         isAuthenticated: true,
         isLoading: false
       };
+    case 'REGISTER_PENDING':
+      return {
+        ...state,
+        user: null,
+        tokens: null,
+        isAuthenticated: false,
+        isLoading: false
+      };
     case 'LOGOUT':
       return {
         ...initialState,
@@ -104,12 +112,32 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await authService.register(userData);
       
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: response
-      });
+      // Check if tokens are provided (user is approved) or pending approval
+      if (response.tokens) {
+        // User is approved and can login immediately
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: response
+        });
+        toast.success('Registration successful!');
+      } else {
+        // User is pending approval (likely a recruiter)
+        dispatch({ type: 'REGISTER_PENDING' });
+        
+        if (response.message) {
+          toast.success(response.message, {
+            duration: 6000, // Longer duration for important message
+            style: {
+              background: '#FEF3C7',
+              color: '#92400E',
+              border: '1px solid #F59E0B'
+            }
+          });
+        } else {
+          toast.success('Registration successful! Your account is pending approval.');
+        }
+      }
       
-      toast.success('Registration successful!');
       return response;
     } catch (error) {
       toast.error(error.message || 'Registration failed');
