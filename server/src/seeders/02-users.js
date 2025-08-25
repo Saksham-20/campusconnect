@@ -17,9 +17,13 @@ module.exports = {
         first_name: 'System',
         last_name: 'Administrator',
         phone: '+1-555-0001',
+        profile_picture: 'https://via.placeholder.com/150x150/6B7280/FFFFFF?text=SA',
         organization_id: null,
         is_active: true,
         is_verified: true,
+        approval_status: 'approved',
+        approved_by: null, // Admin approves themselves
+        approved_at: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -32,9 +36,13 @@ module.exports = {
         first_name: 'Jane',
         last_name: 'Smith',
         phone: '+1-555-0002',
+        profile_picture: 'https://via.placeholder.com/150x150/8B5CF6/FFFFFF?text=JS',
         organization_id: 1,
         is_active: true,
         is_verified: true,
+        approval_status: 'approved',
+        approved_by: 1, // Approved by admin
+        approved_at: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -47,9 +55,13 @@ module.exports = {
         first_name: 'Michael',
         last_name: 'Johnson',
         phone: '+1-555-0003',
+        profile_picture: 'https://via.placeholder.com/150x150/EC4899/FFFFFF?text=MJ',
         organization_id: 2,
         is_active: true,
         is_verified: true,
+        approval_status: 'approved',
+        approved_by: 1, // Approved by admin
+        approved_at: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -61,9 +73,13 @@ module.exports = {
         first_name: 'Sarah',
         last_name: 'Williams',
         phone: '+1-555-0004',
+        profile_picture: 'https://via.placeholder.com/150x150/14B8A6/FFFFFF?text=SW',
         organization_id: 3,
         is_active: true,
         is_verified: true,
+        approval_status: 'approved',
+        approved_by: 1, // Approved by admin
+        approved_at: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -76,9 +92,13 @@ module.exports = {
         first_name: 'John',
         last_name: 'Doe',
         phone: '+1-555-0005',
+        profile_picture: 'https://via.placeholder.com/000000/FFFFFF?text=JD',
         organization_id: 1,
         is_active: true,
         is_verified: true,
+        approval_status: 'approved',
+        approved_by: 1, // Approved by admin
+        approved_at: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -90,9 +110,13 @@ module.exports = {
         first_name: 'Alice',
         last_name: 'Wilson',
         phone: '+1-555-0006',
+        profile_picture: 'https://via.placeholder.com/150x150/F97316/FFFFFF?text=AW',
         organization_id: 1,
         is_active: true,
         is_verified: true,
+        approval_status: 'approved',
+        approved_by: 1, // Approved by admin
+        approved_at: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -104,9 +128,13 @@ module.exports = {
         first_name: 'Bob',
         last_name: 'Martinez',
         phone: '+1-555-0007',
+        profile_picture: 'https://via.placeholder.com/150x150/84CC16/FFFFFF?text=BM',
         organization_id: 4,
         is_active: true,
         is_verified: true,
+        approval_status: 'approved',
+        approved_by: 1, // Approved by admin
+        approved_at: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -118,9 +146,13 @@ module.exports = {
         first_name: 'Emma',
         last_name: 'Davis',
         phone: '+1-555-0008',
+        profile_picture: 'https://via.placeholder.com/150x150/A855F7/FFFFFF?text=ED',
         organization_id: 1,
         is_active: true,
         is_verified: true,
+        approval_status: 'approved',
+        approved_by: 1, // Approved by admin
+        approved_at: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       }

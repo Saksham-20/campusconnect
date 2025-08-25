@@ -19,7 +19,7 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      user_id: {
+      student_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
@@ -43,7 +43,7 @@ module.exports = {
       },
       time_spent: {
         type: Sequelize.INTEGER,
-        comment: 'Time spent in minutes'
+        comment: 'Time spent in seconds'
       },
       started_at: {
         type: Sequelize.DATE
@@ -52,8 +52,8 @@ module.exports = {
         type: Sequelize.DATE
       },
       status: {
-        type: Sequelize.ENUM('started', 'completed', 'abandoned'),
-        defaultValue: 'started'
+        type: Sequelize.ENUM('in_progress', 'completed', 'submitted'),
+        defaultValue: 'in_progress'
       },
       created_at: {
         allowNull: false,
@@ -66,9 +66,9 @@ module.exports = {
     });
 
     await queryInterface.addIndex('assessment_results', ['assessment_id']);
-    await queryInterface.addIndex('assessment_results', ['user_id']);
+    await queryInterface.addIndex('assessment_results', ['student_id']);
     await queryInterface.addIndex('assessment_results', ['status']);
-    await queryInterface.addIndex('assessment_results', ['assessment_id', 'user_id'], { unique: true });
+    await queryInterface.addIndex('assessment_results', ['assessment_id', 'student_id'], { unique: true });
   },
 
   async down(queryInterface, Sequelize) {
