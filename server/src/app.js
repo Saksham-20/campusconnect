@@ -283,6 +283,119 @@ app.get('/api/debug/users', async (req, res) => {
   }
 });
 
+// Test login endpoint with detailed debugging
+app.post('/api/debug/test-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    console.log('🔍 Debug: Testing login for email:', email);
+    
+    const { User, Organization } = require('./models');
+    const bcrypt = require('bcryptjs');
+    
+    // Step 1: Check if user exists
+    console.log('🔍 Step 1: Looking for user...');
+    const user = await User.findOne({
+      where: { email, isActive: true },
+      include: [
+        {
+          model: Organization,
+          as: 'organization'
+        }
+      ]
+    });
+    
+    console.log('🔍 User found:', user ? 'Yes' : 'No');
+    if (user) {
+      console.log('🔍 User details:', {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        approvalStatus: user.approvalStatus,
+        hasPasswordHash: !!user.passwordHash,
+        organizationId: user.organizationId
+      });
+    }
+    
+    if (!user) {
+      return res.json({
+        success: false,
+        step: 'user_lookup',
+        message: 'User not found or inactive',
+        user: null
+      });
+    }
+    
+    // Step 2: Check password
+    console.log('🔍 Step 2: Checking password...');
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    console.log('🔍 Password valid:', isPasswordValid);
+    
+    if (!isPasswordValid) {
+      return res.json({
+        success: false,
+        step: 'password_check',
+        message: 'Invalid password',
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role
+        }
+      });
+    }
+    
+    // Step 3: Check approval status
+    console.log('🔍 Step 3: Checking approval status...');
+    if (user.approvalStatus !== 'approved') {
+      return res.json({
+        success: false,
+        step: 'approval_check',
+        message: 'User not approved',
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          approvalStatus: user.approvalStatus
+        }
+      });
+    }
+    
+    // Step 4: Generate tokens (simplified)
+    console.log('🔍 Step 4: Generating tokens...');
+    const jwt = require('jsonwebtoken');
+    const accessToken = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'fallback-secret',
+      { expiresIn: '1h' }
+    );
+    
+    console.log('🔍 Access token generated:', !!accessToken);
+    
+    res.json({
+      success: true,
+      message: 'Login test successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        approvalStatus: user.approvalStatus,
+        organization: user.organization
+      },
+      hasToken: !!accessToken
+    });
+    
+  } catch (error) {
+    console.error('❌ Debug login error:', error);
+    res.status(500).json({ 
+      success: false,
+      step: 'error',
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
