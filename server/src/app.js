@@ -213,6 +213,37 @@ app.get('/api/debug/user/:email', async (req, res) => {
   }
 });
 
+// Manual seeding endpoint
+app.post('/api/debug/seed', async (req, res) => {
+  try {
+    console.log('🌱 Starting manual database seeding...');
+    
+    // Run the seeders
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    
+    const { stdout, stderr } = await execAsync('NODE_ENV=production npx sequelize-cli db:seed:all');
+    
+    console.log('🌱 Seeding output:', stdout);
+    if (stderr) console.log('🌱 Seeding errors:', stderr);
+    
+    res.json({
+      success: true,
+      message: 'Database seeded successfully',
+      output: stdout
+    });
+  } catch (error) {
+    console.error('❌ Seeding error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message,
+      output: error.stdout || '',
+      errors: error.stderr || ''
+    });
+  }
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
