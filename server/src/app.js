@@ -244,6 +244,45 @@ app.post('/api/debug/seed', async (req, res) => {
   }
 });
 
+// List all users endpoint
+app.get('/api/debug/users', async (req, res) => {
+  try {
+    const { User, Organization } = require('./models');
+    
+    console.log('🔍 Debug: Fetching all users...');
+    
+    const users = await User.findAll({
+      include: [
+        {
+          model: Organization,
+          as: 'organization'
+        }
+      ],
+      limit: 10
+    });
+    
+    console.log('🔍 Debug: Found', users.length, 'users');
+    
+    res.json({
+      count: users.length,
+      users: users.map(user => ({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        approvalStatus: user.approvalStatus,
+        organization: user.organization ? {
+          id: user.organization.id,
+          name: user.organization.name
+        } : null
+      }))
+    });
+  } catch (error) {
+    console.error('❌ Debug error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
