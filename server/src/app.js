@@ -139,37 +139,49 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use(errorHandler);
 
-// Database connection
-const connectDB = async () => {
-  try {
-    console.log('🔍 Attempting database connection...');
-    console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
-    console.log('🔍 DATABASE_URL exists:', !!process.env.DATABASE_URL);
-    if (process.env.DATABASE_URL) {
-      console.log('🔍 DATABASE_URL starts with:', process.env.DATABASE_URL.substring(0, 30) + '...');
-      console.log('🔍 DATABASE_URL contains .render.com:', process.env.DATABASE_URL.includes('.render.com'));
-      console.log('🔍 DATABASE_URL contains singapore-postgres:', process.env.DATABASE_URL.includes('singapore-postgres'));
+// Database connection with retry logic
+const connectDB = async (retries = 5, delay = 5000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`🔍 Attempting database connection... (attempt ${i + 1}/${retries})`);
+      console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
+      console.log('🔍 DATABASE_URL exists:', !!process.env.DATABASE_URL);
+      if (process.env.DATABASE_URL) {
+        console.log('🔍 DATABASE_URL starts with:', process.env.DATABASE_URL.substring(0, 30) + '...');
+        console.log('🔍 DATABASE_URL contains .render.com:', process.env.DATABASE_URL.includes('.render.com'));
+        console.log('🔍 DATABASE_URL contains singapore-postgres:', process.env.DATABASE_URL.includes('singapore-postgres'));
+      }
+      
+      // Log the actual config being used
+      console.log('🔍 Sequelize config:', {
+        dialect: sequelize.options.dialect,
+        ssl: sequelize.options.dialectOptions?.ssl,
+        host: sequelize.config.host,
+        port: sequelize.config.port,
+        database: sequelize.config.database
+      });
+      
+      await sequelize.authenticate();
+      console.log('✅ Database connection established successfully');
+      
+      if (process.env.NODE_ENV === 'development') {
+        await sequelize.sync({ alter: true });
+        console.log('✅ Database synchronized');
+      }
+      return; // Success, exit the retry loop
+      
+    } catch (error) {
+      console.error(`❌ Database connection attempt ${i + 1} failed:`, error.message);
+      
+      if (i === retries - 1) {
+        console.error('❌ All database connection attempts failed');
+        console.error('❌ Final error:', error);
+        process.exit(1);
+      }
+      
+      console.log(`⏳ Waiting ${delay}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-    
-    // Log the actual config being used
-    console.log('🔍 Sequelize config:', {
-      dialect: sequelize.options.dialect,
-      ssl: sequelize.options.dialectOptions?.ssl,
-      host: sequelize.config.host,
-      port: sequelize.config.port,
-      database: sequelize.config.database
-    });
-    
-    await sequelize.authenticate();
-    console.log('✅ Database connection established successfully');
-    
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: true });
-      console.log('✅ Database synchronized');
-    }
-  } catch (error) {
-    console.error('❌ Unable to connect to database:', error);
-    process.exit(1);
   }
 };
 
