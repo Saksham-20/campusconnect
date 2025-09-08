@@ -176,6 +176,43 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Debug endpoint to check database and user
+app.get('/api/debug/user/:email', async (req, res) => {
+  try {
+    const { User, Organization } = require('./models');
+    const { email } = req.params;
+    
+    console.log('🔍 Debug: Looking for user with email:', email);
+    
+    const user = await User.findOne({
+      where: { email },
+      include: [
+        {
+          model: Organization,
+          as: 'organization'
+        }
+      ]
+    });
+    
+    console.log('🔍 Debug: User found:', user ? 'Yes' : 'No');
+    
+    res.json({
+      found: !!user,
+      user: user ? {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        approvalStatus: user.approvalStatus,
+        organization: user.organization
+      } : null
+    });
+  } catch (error) {
+    console.error('❌ Debug error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
