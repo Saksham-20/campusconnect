@@ -29,7 +29,11 @@ module.exports = {
     logging: false
   },
   production: {
-    url: process.env.DATABASE_URL,
+    username: process.env.DATABASE_URL ? process.env.DATABASE_URL.split('://')[1].split(':')[0] : 'campusconnect_user',
+    password: process.env.DATABASE_URL ? process.env.DATABASE_URL.split('://')[1].split(':')[1].split('@')[0] : 'hS2eYgters6pg5SsLl7KolednqZ34m2w',
+    database: process.env.DATABASE_URL ? process.env.DATABASE_URL.split('/').pop() : 'campusconnect_prod_m1s6',
+    host: process.env.DATABASE_URL ? process.env.DATABASE_URL.split('@')[1].split(':')[0] : 'dpg-d2vctker433s73f3n040-a',
+    port: process.env.DATABASE_URL ? parseInt(process.env.DATABASE_URL.split('@')[1].split(':')[1].split('/')[0]) : 5432,
     dialect: 'postgres',
     dialectOptions: {
       ssl: {
