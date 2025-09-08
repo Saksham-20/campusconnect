@@ -13,10 +13,25 @@ let sequelize;
 if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
   // Parse DATABASE_URL manually for production
   const url = process.env.DATABASE_URL;
-  const urlParts = url.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
+  console.log('🔍 Full DATABASE_URL:', url);
+  
+  // Handle both formats: with port and without port
+  let urlParts = url.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
+  let username, password, host, port, database;
   
   if (urlParts) {
-    const [, username, password, host, port, database] = urlParts;
+    // Format with port: postgresql://user:pass@host:port/db
+    [, username, password, host, port, database] = urlParts;
+  } else {
+    // Format without port: postgresql://user:pass@host/db (default port 5432)
+    urlParts = url.match(/postgresql:\/\/([^:]+):([^@]+)@([^\/]+)\/(.+)/);
+    if (urlParts) {
+      [, username, password, host, database] = urlParts;
+      port = '5432'; // Default PostgreSQL port
+    }
+  }
+  
+  if (urlParts) {
     console.log('🔍 Parsed DATABASE_URL:', { username, host, port, database });
     
     sequelize = new Sequelize({
