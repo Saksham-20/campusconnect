@@ -147,7 +147,18 @@ const connectDB = async () => {
     console.log('🔍 DATABASE_URL exists:', !!process.env.DATABASE_URL);
     if (process.env.DATABASE_URL) {
       console.log('🔍 DATABASE_URL starts with:', process.env.DATABASE_URL.substring(0, 30) + '...');
+      console.log('🔍 DATABASE_URL contains .render.com:', process.env.DATABASE_URL.includes('.render.com'));
+      console.log('🔍 DATABASE_URL contains singapore-postgres:', process.env.DATABASE_URL.includes('singapore-postgres'));
     }
+    
+    // Log the actual config being used
+    console.log('🔍 Sequelize config:', {
+      dialect: sequelize.options.dialect,
+      ssl: sequelize.options.dialectOptions?.ssl,
+      host: sequelize.config.host,
+      port: sequelize.config.port,
+      database: sequelize.config.database
+    });
     
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully');

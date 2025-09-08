@@ -32,10 +32,10 @@ module.exports = {
     use_env_variable: 'DATABASE_URL',
     dialect: 'postgres',
     dialectOptions: {
-      ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('.render.com') ? {
+      ssl: {
         require: true,
         rejectUnauthorized: false
-      } : false
+      }
     },
     logging: false,
     pool: {
