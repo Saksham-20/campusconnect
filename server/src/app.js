@@ -6,7 +6,49 @@ const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 
-const { sequelize } = require('./models');
+// Create Sequelize instance directly with parsed DATABASE_URL
+const { Sequelize } = require('sequelize');
+
+let sequelize;
+if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
+  // Parse DATABASE_URL manually for production
+  const url = process.env.DATABASE_URL;
+  const urlParts = url.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
+  
+  if (urlParts) {
+    const [, username, password, host, port, database] = urlParts;
+    console.log('🔍 Parsed DATABASE_URL:', { username, host, port, database });
+    
+    sequelize = new Sequelize({
+      username,
+      password,
+      host,
+      port: parseInt(port),
+      database,
+      dialect: 'postgres',
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      },
+      logging: false,
+      pool: {
+        max: 20,
+        min: 5,
+        acquire: 60000,
+        idle: 10000
+      }
+    });
+  } else {
+    console.error('❌ Failed to parse DATABASE_URL:', url);
+    process.exit(1);
+  }
+} else {
+  // Use models for development
+  const models = require('./models');
+  sequelize = models.sequelize;
+}
 const errorHandler = require('./middleware/errorHandler');
 
 // Import routes
