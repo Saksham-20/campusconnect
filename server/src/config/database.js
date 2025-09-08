@@ -1,5 +1,7 @@
 // server/src/config/database.js
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
 module.exports = {
   development: {
@@ -30,10 +32,10 @@ module.exports = {
     use_env_variable: 'DATABASE_URL',
     dialect: 'postgres',
     dialectOptions: {
-      ssl: {
+      ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('.render.com') ? {
         require: true,
         rejectUnauthorized: false
-      }
+      } : false
     },
     logging: false,
     pool: {
