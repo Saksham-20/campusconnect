@@ -10,6 +10,7 @@ import Header from './components/common/Header';
 // Import pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import PendingApproval from './pages/auth/PendingApproval';
 import StudentDashboard from './pages/dashboard/StudentDashboard';
 import RecruiterDashboard from './pages/dashboard/RecruiterDashboard';
 import TPODashboard from './pages/dashboard/TPODashboard';
@@ -66,8 +67,9 @@ function App() {
             
             <Routes>
               {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+                      <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/pending-approval" element={<PendingApproval />} />
               
               {/* Protected routes */}
               <Route path="/" element={

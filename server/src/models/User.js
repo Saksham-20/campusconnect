@@ -114,11 +114,25 @@ module.exports = (sequelize, DataTypes) => {
         if (user.phone === '') {
           user.phone = null;
         }
+        
+        // Set isActive to false for users with pending approval (except admin)
+        if (user.role !== 'admin' && user.approvalStatus === 'pending') {
+          user.isActive = false;
+        }
       },
       beforeUpdate: (user) => {
         // Convert empty string to null for phone
         if (user.phone === '') {
           user.phone = null;
+        }
+        
+        // Update isActive based on approval status
+        if (user.role !== 'admin') {
+          if (user.approvalStatus === 'approved') {
+            user.isActive = true;
+          } else if (user.approvalStatus === 'rejected') {
+            user.isActive = false;
+          }
         }
       }
     }

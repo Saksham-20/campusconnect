@@ -294,9 +294,12 @@ class ApprovalController {
       }
 
       const [orgStats, recruiterStats, recentApprovals] = await Promise.all([
-        // Organization approval statistics
+        // Organization approval statistics (only companies)
         Organization.findAll({
-          where: { type: 'company' },
+          where: { 
+            type: 'company',
+            approvalStatus: { [Op.ne]: null }
+          },
           attributes: [
             'approvalStatus',
             [Organization.sequelize.fn('COUNT', Organization.sequelize.col('id')), 'count']
@@ -305,12 +308,21 @@ class ApprovalController {
           raw: true
         }),
 
-        // Recruiter approval statistics
+        // Recruiter approval statistics (only from companies)
         User.findAll({
           where: { 
             role: 'recruiter',
-            organizationId: { [Op.ne]: organizationId }
+            organizationId: { [Op.ne]: organizationId },
+            approvalStatus: { [Op.ne]: null }
           },
+          include: [
+            {
+              model: Organization,
+              as: 'organization',
+              where: { type: 'company' },
+              attributes: []
+            }
+          ],
           attributes: [
             'approvalStatus',
             [User.sequelize.fn('COUNT', User.sequelize.col('id')), 'count']
@@ -319,7 +331,7 @@ class ApprovalController {
           raw: true
         }),
 
-        // Recent approvals
+        // Recent approvals (only companies)
         Organization.findAll({
           where: {
             type: 'company',

@@ -12,6 +12,13 @@ export const USER_ROLES = {
   ADMIN: 'admin'
 };
 
+// Approval Status
+export const APPROVAL_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected'
+};
+
 // Job Types
 export const JOB_TYPES = {
   FULL_TIME: 'full_time',
@@ -393,6 +400,7 @@ export default {
   API_BASE_URL,
   WS_URL,
   USER_ROLES,
+  APPROVAL_STATUS,
   JOB_TYPES,
   JOB_STATUS,
   APPLICATION_STATUS,

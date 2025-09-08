@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import api from '../../services/api';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -118,8 +119,22 @@ const Register = () => {
         delete submitData.organizationId;
       }
 
-      await register(submitData);
-      navigate('/', { replace: true });
+      const response = await register(submitData);
+      
+      // Check if user needs approval
+      if (response.user.approvalStatus === 'pending') {
+        // Redirect to pending approval page for recruiters
+        if (response.user.role === 'recruiter') {
+          navigate('/pending-approval', { replace: true });
+        } else {
+          // For other roles, show success message and redirect to dashboard
+          toast.success('Registration successful! Redirecting to dashboard...');
+          navigate('/', { replace: true });
+        }
+      } else {
+        // User is auto-approved, redirect to dashboard
+        navigate('/', { replace: true });
+      }
     } catch (error) {
       setErrors({
         submit: error.message || 'Registration failed. Please try again.'
@@ -131,8 +146,10 @@ const Register = () => {
 
   const getFilteredOrganizations = () => {
     if (formData.role === 'student' || formData.role === 'tpo') {
+      // Students and TPOs can only belong to university organizations
       return organizations.filter(org => org.type === 'university');
     } else if (formData.role === 'recruiter') {
+      // Recruiters can only belong to company organizations
       return organizations.filter(org => org.type === 'company');
     }
     return organizations;

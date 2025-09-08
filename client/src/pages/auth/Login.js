@@ -64,9 +64,20 @@ const Login = () => {
       await login(formData.email, formData.password);
       navigate(from, { replace: true });
     } catch (error) {
-      setErrors({
-        submit: error.message || 'Login failed. Please try again.'
-      });
+      // Check if it's an approval status error
+      if (error.message.includes('pending approval')) {
+        setErrors({
+          submit: 'Your account is pending approval. Please wait for TPO/Admin approval before logging in.'
+        });
+      } else if (error.message.includes('rejected')) {
+        setErrors({
+          submit: 'Your account has been rejected. Please contact support for more information.'
+        });
+      } else {
+        setErrors({
+          submit: error.message || 'Login failed. Please try again.'
+        });
+      }
     } finally {
       setIsLoading(false);
     }

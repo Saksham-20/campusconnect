@@ -7,6 +7,12 @@ module.exports = {
     ADMIN: 'admin'
   },
 
+  APPROVAL_STATUS: {
+    PENDING: 'pending',
+    APPROVED: 'approved',
+    REJECTED: 'rejected'
+  },
+
   JOB_TYPES: {
     INTERNSHIP: 'internship',
     FULL_TIME: 'full_time',

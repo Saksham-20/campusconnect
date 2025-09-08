@@ -53,25 +53,59 @@ class AuthService {
     if (!organization) {
       throw new Error('Invalid organization');
     }
+    
+    // Enforce one college system: students and TPOs must belong to universities
+    if ((role === 'student' || role === 'tpo') && organization.type !== 'university') {
+      throw new Error('Students and TPOs can only belong to university organizations');
+    }
+    
+    // Recruiters must belong to company organizations
+    if (role === 'recruiter' && organization.type !== 'company') {
+      throw new Error('Recruiters can only belong to company organizations');
+    }
+  } else if (role !== 'admin') {
+    // Non-admin users must have an organization
+    throw new Error('Organization is required for this role');
   }
 
   // Hash password
   const passwordHash = await this.hashPassword(password);
 
-  // Clean up phone number - convert empty string to null
-  const cleanedProfileData = { ...profileData };
-  if (cleanedProfileData.phone === '') {
-    cleanedProfileData.phone = null;
-  }
+      // Clean up phone number - convert empty string to null
+    const cleanedProfileData = { ...profileData };
+    if (cleanedProfileData.phone === '') {
+      cleanedProfileData.phone = null;
+    }
 
-  // Create user
-  const user = await User.create({
-    email,
-    passwordHash,
-    role,
-    organizationId,
-    ...cleanedProfileData
-  });
+    // Determine approval status based on role
+    let approvalStatus = 'pending';
+    let isActive = false;
+    
+    if (role === 'admin') {
+      // Admin is auto-approved and active
+      approvalStatus = 'approved';
+      isActive = true;
+    } else if (role === 'student' || role === 'tpo') {
+      // Students and TPOs are auto-approved if they belong to a university
+      approvalStatus = 'approved';
+      isActive = true;
+    } else if (role === 'recruiter') {
+      // Recruiters need approval from TPO/Admin
+      approvalStatus = 'pending';
+      isActive = false;
+    }
+
+    // Create user
+    const user = await User.create({
+      email,
+      passwordHash,
+      role,
+      organizationId,
+      approvalStatus,
+      isActive,
+      isVerified: false,
+      ...cleanedProfileData
+    });
 
   // Generate tokens
   const tokens = this.generateTokens(user.id);
@@ -99,6 +133,17 @@ class AuthService {
 
     if (!user) {
       throw new Error('Invalid credentials');
+    }
+
+    // Check if user is active and approved
+    if (!user.isActive) {
+      if (user.approvalStatus === 'pending') {
+        throw new Error('Your account is pending approval. Please wait for TPO/Admin approval before logging in.');
+      } else if (user.approvalStatus === 'rejected') {
+        throw new Error('Your account has been rejected. Please contact support for more information.');
+      } else {
+        throw new Error('Your account has been disabled. Please contact support for more information.');
+      }
     }
 
     // Verify password

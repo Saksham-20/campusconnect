@@ -35,10 +35,22 @@ const authenticateToken = async (req, res, next) => {
     }
 
     if (!user.isActive) {
-      return res.status(401).json({
-        error: 'Account Disabled',
-        message: 'Your account has been disabled'
-      });
+      if (user.approvalStatus === 'pending') {
+        return res.status(401).json({
+          error: 'Account Pending Approval',
+          message: 'Your account is pending approval. Please wait for TPO/Admin approval before accessing the system.'
+        });
+      } else if (user.approvalStatus === 'rejected') {
+        return res.status(401).json({
+          error: 'Account Rejected',
+          message: 'Your account has been rejected. Please contact support for more information.'
+        });
+      } else {
+        return res.status(401).json({
+          error: 'Account Disabled',
+          message: 'Your account has been disabled. Please contact support for more information.'
+        });
+      }
     }
 
     req.user = user;

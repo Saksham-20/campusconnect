@@ -278,9 +278,8 @@ class ApplicationController {
         // Recruiters can view applications for jobs from their organization
         canView = application.job && application.job.organizationId === req.user.organizationId;
       } else if (req.user.role === 'tpo') {
-        // TPO can view applications from students in their organization OR jobs from their organization
-        canView = (application.student && application.student.organizationId === req.user.organizationId) ||
-                  (application.job && application.job.organizationId === req.user.organizationId);
+        // TPO can only view applications from students in their own university
+        canView = application.student && application.student.organizationId === req.user.organizationId;
       }
 
       // Debug logging for permission issues
