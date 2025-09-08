@@ -3,6 +3,10 @@ const { Sequelize } = require('sequelize');
 const config = require('../config/database');
 
 const env = process.env.NODE_ENV || 'development';
+console.log('🔍 Environment:', env);
+console.log('🔍 DATABASE_URL set:', !!process.env.DATABASE_URL);
+console.log('🔍 Config being used:', config[env] ? 'Found' : 'Not found');
+
 const sequelize = new Sequelize(config[env]);
 
 const db = {};

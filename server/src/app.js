@@ -142,6 +142,13 @@ app.use(errorHandler);
 // Database connection
 const connectDB = async () => {
   try {
+    console.log('🔍 Attempting database connection...');
+    console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
+    console.log('🔍 DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    if (process.env.DATABASE_URL) {
+      console.log('🔍 DATABASE_URL starts with:', process.env.DATABASE_URL.substring(0, 30) + '...');
+    }
+    
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully');
     
