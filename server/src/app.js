@@ -6,64 +6,9 @@ const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 
-// Create Sequelize instance directly with parsed DATABASE_URL
-const { Sequelize } = require('sequelize');
-
-let sequelize;
-if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
-  // Parse DATABASE_URL manually for production
-  const url = process.env.DATABASE_URL;
-  console.log('🔍 Full DATABASE_URL:', url);
-  
-  // Handle both formats: with port and without port
-  let urlParts = url.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
-  let username, password, host, port, database;
-  
-  if (urlParts) {
-    // Format with port: postgresql://user:pass@host:port/db
-    [, username, password, host, port, database] = urlParts;
-  } else {
-    // Format without port: postgresql://user:pass@host/db (default port 5432)
-    urlParts = url.match(/postgresql:\/\/([^:]+):([^@]+)@([^\/]+)\/(.+)/);
-    if (urlParts) {
-      [, username, password, host, database] = urlParts;
-      port = '5432'; // Default PostgreSQL port
-    }
-  }
-  
-  if (urlParts) {
-    console.log('🔍 Parsed DATABASE_URL:', { username, host, port, database });
-    
-    sequelize = new Sequelize({
-      username,
-      password,
-      host,
-      port: parseInt(port),
-      database,
-      dialect: 'postgres',
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false
-        }
-      },
-      logging: false,
-      pool: {
-        max: 20,
-        min: 5,
-        acquire: 60000,
-        idle: 10000
-      }
-    });
-  } else {
-    console.error('❌ Failed to parse DATABASE_URL:', url);
-    process.exit(1);
-  }
-} else {
-  // Use models for development
-  const models = require('./models');
-  sequelize = models.sequelize;
-}
+// Use models for both development and production
+const models = require('./models');
+const sequelize = models.sequelize;
 const errorHandler = require('./middleware/errorHandler');
 
 // Import routes
@@ -179,10 +124,15 @@ app.get('/api/health', (req, res) => {
 // Debug endpoint to check database and user
 app.get('/api/debug/user/:email', async (req, res) => {
   try {
-    const { User, Organization } = require('./models');
+    const { User, Organization } = models;
     const { email } = req.params;
     
     console.log('🔍 Debug: Looking for user with email:', email);
+    console.log('🔍 Debug: Sequelize instance:', sequelize ? 'Available' : 'Not available');
+    
+    // Test database connection first
+    await sequelize.authenticate();
+    console.log('🔍 Debug: Database connection successful');
     
     const user = await User.findOne({
       where: { email },
@@ -247,9 +197,14 @@ app.post('/api/debug/seed', async (req, res) => {
 // List all users endpoint
 app.get('/api/debug/users', async (req, res) => {
   try {
-    const { User, Organization } = require('./models');
+    const { User, Organization } = models;
     
     console.log('🔍 Debug: Fetching all users...');
+    console.log('🔍 Debug: Sequelize instance:', sequelize ? 'Available' : 'Not available');
+    
+    // Test database connection first
+    await sequelize.authenticate();
+    console.log('🔍 Debug: Database connection successful');
     
     const users = await User.findAll({
       include: [
@@ -289,8 +244,13 @@ app.post('/api/debug/test-login', async (req, res) => {
     const { email, password } = req.body;
     console.log('🔍 Debug: Testing login for email:', email);
     
-    const { User, Organization } = require('./models');
+    const { User, Organization } = models;
     const bcrypt = require('bcryptjs');
+    
+    // Test database connection first
+    console.log('🔍 Debug: Testing database connection...');
+    await sequelize.authenticate();
+    console.log('🔍 Debug: Database connection successful');
     
     // Step 1: Check if user exists
     console.log('🔍 Step 1: Looking for user...');
