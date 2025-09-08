@@ -28,21 +28,58 @@ module.exports = {
     dialect: 'postgres',
     logging: false
   },
-  production: {
-    use_env_variable: 'DATABASE_URL',
-    dialect: 'postgres',
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
+  production: (() => {
+    if (process.env.DATABASE_URL) {
+      // Parse DATABASE_URL manually
+      const url = process.env.DATABASE_URL;
+      console.log('🔍 Parsing DATABASE_URL for production config');
+      
+      // Handle both formats: with port and without port
+      let urlParts = url.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
+      let username, password, host, port, database;
+
+      if (urlParts) {
+        // Format with port: postgresql://user:pass@host:port/db
+        [, username, password, host, port, database] = urlParts;
+      } else {
+        // Format without port: postgresql://user:pass@host/db (default port 5432)
+        urlParts = url.match(/postgresql:\/\/([^:]+):([^@]+)@([^\/]+)\/(.+)/);
+        if (urlParts) {
+          [, username, password, host, database] = urlParts;
+          port = '5432'; // Default PostgreSQL port
+        }
       }
-    },
-    logging: false,
-    pool: {
-      max: 20,
-      min: 5,
-      acquire: 60000,
-      idle: 10000
+
+      if (urlParts) {
+        console.log('🔍 Parsed DATABASE_URL:', { username, host, port, database });
+        return {
+          username,
+          password,
+          host,
+          port: parseInt(port),
+          database,
+          dialect: 'postgres',
+          dialectOptions: {
+            ssl: {
+              require: true,
+              rejectUnauthorized: false
+            }
+          },
+          logging: false,
+          pool: {
+            max: 20,
+            min: 5,
+            acquire: 60000,
+            idle: 10000
+          }
+        };
+      } else {
+        console.error('❌ Failed to parse DATABASE_URL:', url);
+        throw new Error('Invalid DATABASE_URL format');
+      }
+    } else {
+      console.error('❌ DATABASE_URL not found in production');
+      throw new Error('DATABASE_URL is required in production');
     }
-  }
+  })()
 };
