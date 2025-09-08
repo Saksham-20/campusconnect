@@ -84,6 +84,9 @@ const approvalRoutes = require('./routes/approvals');
 
 const app = express();
 
+// Trust proxy for rate limiting (required for Render)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
