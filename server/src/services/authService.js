@@ -120,16 +120,30 @@ class AuthService {
 }
 
   async login(email, password) {
-    // Find user with organization
-    const user = await User.findOne({
-      where: { email, isActive: true },
-      include: [
-        {
-          model: Organization,
-          as: 'organization'
-        }
-      ]
-    });
+    console.log('🔍 Login attempt for email:', email);
+    
+    try {
+      // Find user with organization
+      const user = await User.findOne({
+        where: { email, isActive: true },
+        include: [
+          {
+            model: Organization,
+            as: 'organization'
+          }
+        ]
+      });
+      
+      console.log('🔍 User found:', user ? 'Yes' : 'No');
+      if (user) {
+        console.log('🔍 User details:', {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive,
+          approvalStatus: user.approvalStatus
+        });
+      }
 
     if (!user) {
       throw new Error('Invalid credentials');
@@ -165,6 +179,10 @@ class AuthService {
       user: userWithoutPassword,
       tokens
     };
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      throw error;
+    }
   }
 
   async refreshTokens(refreshToken) {
