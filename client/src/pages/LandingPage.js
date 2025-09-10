@@ -95,15 +95,15 @@ const LandingPage = () => {
           </p>
           <div className="hero-stats">
             <div className="stat-item">
-              <div className="stat-number">500+</div>
+              <div className="stat-number">7500+</div>
               <div className="stat-label">Active Students</div>
             </div>
             <div className="stat-item">
-              <div className="stat-number">100+</div>
+              <div className="stat-number">50+</div>
               <div className="stat-label">Partner Companies</div>
             </div>
             <div className="stat-item">
-              <div className="stat-number">50+</div>
+              <div className="stat-number">2000+</div>
               <div className="stat-label">Job Placements</div>
             </div>
           </div>
@@ -587,6 +587,7 @@ const LandingPage = () => {
               <h3>Contact Info</h3>
               <p>info@globoniks.com</p>
               <p>www.globoniks.com</p>
+              <p>+91 76964 94606</p>
             </div>
           </div>
           <div className="footer-bottom">
