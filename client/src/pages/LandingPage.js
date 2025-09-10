@@ -108,7 +108,7 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="hero-buttons">
-            <Link to="/login" className="btn btn-primary">
+            <Link to="/login" state={{ from: { pathname: '/dashboard' } }} className="btn btn-primary">
               Try Demo
             </Link>
             <button className="btn btn-secondary" onClick={() => handlePageChange('features')}>
@@ -186,7 +186,7 @@ const LandingPage = () => {
             <h2>Ready to transform your campus?</h2>
             <p>Join hundreds of institutions already using CampusConnect to improve student outcomes and streamline operations.</p>
             <div className="cta-buttons">
-              <Link to="/login" className="btn btn-primary">
+              <Link to="/login" state={{ from: { pathname: '/dashboard' } }} className="btn btn-primary">
                 Get Started
               </Link>
               <button className="btn btn-secondary" onClick={() => handlePageChange('features')}>
@@ -301,7 +301,7 @@ const LandingPage = () => {
             <h2>Ready to Transform Your Campus?</h2>
             <p>Join hundreds of institutions already using CampusConnect to improve student outcomes</p>
             <div className="cta-buttons">
-              <Link to="/login" className="btn btn-primary">
+              <Link to="/login" state={{ from: { pathname: '/dashboard' } }} className="btn btn-primary">
                 Start Free Trial
               </Link>
               <button className="btn btn-secondary" onClick={() => handlePageChange('contact')}>
@@ -539,7 +539,7 @@ const LandingPage = () => {
             >
               Contact
             </button>
-            <Link to="/login" className="btn btn-primary nav-cta">
+            <Link to="/login" state={{ from: { pathname: '/dashboard' } }} className="btn btn-primary nav-cta">
               Try Demo
             </Link>
           </div>
