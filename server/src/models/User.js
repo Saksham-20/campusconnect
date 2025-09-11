@@ -115,8 +115,9 @@ module.exports = (sequelize, DataTypes) => {
           user.phone = null;
         }
         
-        // Set isActive to false for users with pending approval (except admin)
-        if (user.role !== 'admin' && user.approvalStatus === 'pending') {
+        // Only set isActive to false if approvalStatus is explicitly 'pending' and user is not admin
+        // Don't override isActive if it's already been set by the service layer
+        if (user.role !== 'admin' && user.approvalStatus === 'pending' && user.isActive === undefined) {
           user.isActive = false;
         }
       },

@@ -90,9 +90,9 @@ class AuthService {
       approvalStatus = 'approved';
       isActive = true;
     } else if (role === 'recruiter') {
-      // Recruiters need approval from TPO/Admin
-      approvalStatus = 'pending';
-      isActive = false;
+      // Recruiters are auto-approved for now (can be changed later for manual approval)
+      approvalStatus = 'approved';
+      isActive = true;
     }
 
     // Create user
@@ -123,9 +123,9 @@ class AuthService {
     console.log('🔍 Login attempt for email:', email);
     
     try {
-      // Find user with organization
+      // First, find user by email (regardless of isActive status)
       const user = await User.findOne({
-        where: { email, isActive: true },
+        where: { email },
         include: [
           {
             model: Organization,
@@ -145,20 +145,20 @@ class AuthService {
         });
       }
 
-    if (!user) {
-      throw new Error('Invalid credentials');
-    }
-
-    // Check if user is active and approved
-    if (!user.isActive) {
-      if (user.approvalStatus === 'pending') {
-        throw new Error('Your account is pending approval. Please wait for TPO/Admin approval before logging in.');
-      } else if (user.approvalStatus === 'rejected') {
-        throw new Error('Your account has been rejected. Please contact support for more information.');
-      } else {
-        throw new Error('Your account has been disabled. Please contact support for more information.');
+      if (!user) {
+        throw new Error('Invalid credentials');
       }
-    }
+
+      // Check if user is active and approved
+      if (!user.isActive) {
+        if (user.approvalStatus === 'pending') {
+          throw new Error('Your account is pending approval. Please wait for TPO/Admin approval before logging in.');
+        } else if (user.approvalStatus === 'rejected') {
+          throw new Error('Your account has been rejected. Please contact support for more information.');
+        } else {
+          throw new Error('Your account has been disabled. Please contact support for more information.');
+        }
+      }
 
     // Verify password
     const isValidPassword = await this.comparePassword(password, user.passwordHash);
