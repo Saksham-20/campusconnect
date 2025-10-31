@@ -16,9 +16,30 @@ const errorHandler = (err, req, res, next) => {
 
   // Sequelize unique constraint errors
   if (err.name === 'SequelizeUniqueConstraintError') {
+    // Extract more details about which constraint failed
+    const constraintName = err.parent?.constraint || err.fields?.join(', ') || 'unknown';
+    const field = err.errors?.[0]?.path || constraintName;
+    
+    console.error('Unique constraint error details:', {
+      constraint: constraintName,
+      fields: err.fields,
+      message: err.parent?.message,
+      errors: err.errors
+    });
+    
+    // Format details as array to match client expectations
+    const details = err.errors?.map(error => ({
+      field: error.path || field,
+      message: error.message || `A record with this ${field} already exists`
+    })) || [{
+      field: field,
+      message: `A record with this ${field} already exists`
+    }];
+    
     return res.status(409).json({
       error: 'Duplicate Entry',
-      message: 'A record with this information already exists'
+      message: `A record with this ${field} already exists`,
+      details: details
     });
   }
 

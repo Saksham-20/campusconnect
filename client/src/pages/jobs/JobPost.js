@@ -188,12 +188,26 @@ const JobPost = () => {
       navigate(`/jobs/${response.job.id}`);
     } catch (error) {
       console.error('Error posting job:', error);
-      if (error.data && error.data.details) {
-        // Show specific validation errors
-        const errorMessages = error.data.details.map(detail => detail.message).join(', ');
-        toast.error(`Validation error: ${errorMessages}`);
+      
+      // Handle different error response formats
+      if (error.data) {
+        // Check if details is an array
+        if (error.data.details && Array.isArray(error.data.details) && error.data.details.length > 0) {
+          // Show specific validation errors
+          const errorMessages = error.data.details.map(detail => detail.message || detail).join(', ');
+          toast.error(errorMessages);
+        } else if (error.data.message) {
+          // Use the main error message
+          toast.error(error.data.message);
+        } else if (error.data.error) {
+          toast.error(error.data.error);
+        } else {
+          toast.error('Failed to post job. Please check the form and try again.');
+        }
+      } else if (error.message) {
+        toast.error(error.message);
       } else {
-        toast.error(error.message || 'Failed to post job');
+        toast.error('Failed to post job. Please try again.');
       }
     } finally {
       setLoading(false);

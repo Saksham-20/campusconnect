@@ -3,8 +3,9 @@ import axios from 'axios';
 import authService from './auth';
 import toast from 'react-hot-toast';
 
-// Use environment variable for API URL, fallback to relative for development
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+// Use environment variable for API URL, with sensible dev fallback
+const API_BASE_URL = process.env.REACT_APP_API_URL 
+  || (process.env.NODE_ENV === 'development' ? `http://localhost:${process.env.REACT_APP_API_PORT || 5000}/api` : '/api');
 
 // Create axios instance
 const api = axios.create({

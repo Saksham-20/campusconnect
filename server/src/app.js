@@ -32,26 +32,38 @@ const app = express();
 // Trust proxy for rate limiting (required for Render)
 app.set('trust proxy', 1);
 
-// Security middleware
+// Security middleware (more strict in production)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  contentSecurityPolicy: {
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
     },
-  },
+  } : false,
+  hsts: process.env.NODE_ENV === 'production' ? undefined : false
 }));
 
 // CORS configuration
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'https://campusconnect-frontend-li7i.onrender.com',
-    'https://campusconnect-frontend-sw79.onrender.com'
-  ],
+  origin: (origin, callback) => {
+    const defaultDevOrigins = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000'
+    ];
+    const allowed = new Set([
+      process.env.FRONTEND_URL || '',
+      'https://campusconnect-frontend-li7i.onrender.com',
+      'https://campusconnect-frontend-sw79.onrender.com',
+      ...(process.env.NODE_ENV === 'development' ? defaultDevOrigins : [])
+    ].filter(Boolean));
+
+    if (!origin) return callback(null, true); // allow non-browser clients
+    if (allowed.has(origin)) return callback(null, true);
+    return callback(new Error('CORS not allowed from this origin'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -88,9 +100,10 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.NODE_ENV === 'production' 
-          ? 'https://api.campusconnect.com' 
-          : 'http://localhost:5000',
+        url: process.env.API_PUBLIC_URL 
+          || (process.env.NODE_ENV === 'production' 
+                ? `http://localhost:${process.env.PORT || 5000}`
+                : `http://localhost:${process.env.PORT || 5000}`),
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server'
       }
     ],

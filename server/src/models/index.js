@@ -5,9 +5,25 @@ const config = require('../config/database');
 const env = process.env.NODE_ENV || 'development';
 console.log('🔍 Environment:', env);
 console.log('🔍 DATABASE_URL set:', !!process.env.DATABASE_URL);
-console.log('🔍 Config being used:', config[env] ? 'Found' : 'Not found');
 
-const sequelize = new Sequelize(config[env]);
+// Get the appropriate config - call the function if it's production
+let dbConfig;
+if (env === 'production') {
+  dbConfig = config[env](); // Call the function for production
+} else {
+  dbConfig = config[env]; // Use the object directly for development/test
+}
+
+console.log('🔍 Config being used:', dbConfig ? 'Found' : 'Not found');
+
+// Initialize Sequelize using explicit params to support both dev (object config)
+// and prod (parsed DATABASE_URL config)
+const sequelize = new Sequelize(
+  dbConfig.database,
+  dbConfig.username,
+  dbConfig.password,
+  dbConfig
+);
 
 const db = {};
 

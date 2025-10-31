@@ -14,13 +14,52 @@ class JobController {
         });
       }
 
-      const jobData = {
+      // Normalize JSON fields to ensure consistent format (empty arrays/objects)
+      // This helps avoid false positive unique constraint errors
+      const normalizedJobData = {
         ...req.body,
         organizationId: req.user.organizationId,
         createdBy: req.user.id
       };
 
-      const job = await Job.create(jobData);
+      // Remove id if it's being sent (should be auto-generated)
+      if (normalizedJobData.id !== undefined) {
+        console.warn('⚠️  Warning: ID field was provided in request, removing it:', normalizedJobData.id);
+        delete normalizedJobData.id;
+      }
+
+      // Ensure skillsRequired is always an array (not null/undefined)
+      if (!normalizedJobData.skillsRequired || !Array.isArray(normalizedJobData.skillsRequired)) {
+        normalizedJobData.skillsRequired = [];
+      } else {
+        // Filter out empty strings and normalize
+        normalizedJobData.skillsRequired = normalizedJobData.skillsRequired
+          .filter(skill => skill && typeof skill === 'string' && skill.trim() !== '')
+          .map(skill => skill.trim());
+      }
+
+      // Ensure eligibilityCriteria is always an object (not null/undefined)
+      if (!normalizedJobData.eligibilityCriteria || typeof normalizedJobData.eligibilityCriteria !== 'object') {
+        normalizedJobData.eligibilityCriteria = {};
+      } else {
+        // Remove null/undefined values from eligibilityCriteria
+        Object.keys(normalizedJobData.eligibilityCriteria).forEach(key => {
+          if (normalizedJobData.eligibilityCriteria[key] === null || normalizedJobData.eligibilityCriteria[key] === undefined) {
+            delete normalizedJobData.eligibilityCriteria[key];
+          }
+        });
+      }
+
+      // Log the job data for debugging (remove sensitive info in production)
+      console.log('Creating job with data:', {
+        title: normalizedJobData.title,
+        organizationId: normalizedJobData.organizationId,
+        jobType: normalizedJobData.jobType,
+        location: normalizedJobData.location,
+        skillsCount: normalizedJobData.skillsRequired?.length || 0
+      });
+
+      const job = await Job.create(normalizedJobData);
 
       const jobWithDetails = await Job.findByPk(job.id, {
         include: [
@@ -34,6 +73,30 @@ class JobController {
         job: jobWithDetails
       });
     } catch (error) {
+      // Log detailed error information for debugging
+      console.error('❌ Error creating job:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        parent: error.parent ? {
+          message: error.parent.message,
+          constraint: error.parent.constraint,
+          detail: error.parent.detail,
+          code: error.parent.code
+        } : null,
+        fields: error.fields,
+        errors: error.errors ? error.errors.map(e => ({
+          path: e.path,
+          message: e.message,
+          value: e.value,
+          type: e.type
+        })) : null,
+        originalError: error.original ? {
+          message: error.original.message,
+          constraint: error.original.constraint,
+          detail: error.original.detail
+        } : null
+      });
       next(error);
     }
   }
