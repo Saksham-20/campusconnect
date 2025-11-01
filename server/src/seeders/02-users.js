@@ -11,7 +11,7 @@ module.exports = {
       // Admin user
       {
         id: 1,
-        email: 'admin@campusconnect.com',
+        email: 'admin@edumapping.com',
         password_hash: passwordHash,
         role: 'admin',
         first_name: 'System',

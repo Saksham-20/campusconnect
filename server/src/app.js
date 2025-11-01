@@ -54,10 +54,13 @@ app.use(cors({
       'http://localhost:3000',
       'http://127.0.0.1:3000'
     ];
+    // Support multiple frontend URLs (comma-separated) and individual URLs
+    const frontendUrls = process.env.FRONTEND_URL 
+      ? process.env.FRONTEND_URL.split(',').map(url => url.trim()).filter(Boolean)
+      : [];
+    
     const allowed = new Set([
-      process.env.FRONTEND_URL || '',
-      'https://campusconnect-frontend-li7i.onrender.com',
-      'https://campusconnect-frontend-sw79.onrender.com',
+      ...frontendUrls,
       ...(process.env.NODE_ENV === 'development' ? defaultDevOrigins : [])
     ].filter(Boolean));
 
@@ -91,12 +94,12 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'CampusConnect API',
+      title: 'EduMapping API',
       version: '1.0.0',
       description: 'A comprehensive campus recruitment platform API',
       contact: {
-        name: 'CampusConnect Team',
-        email: 'support@campusconnect.com'
+        name: 'EduMapping Team',
+        email: 'support@edumapping.com'
       }
     },
     servers: [
@@ -128,7 +131,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'CampusConnect API is running',
+    message: 'EduMapping API is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
     version: '1.0.0'
@@ -385,7 +388,7 @@ app.use('/api/achievements', achievementRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/approvals', approvalRoutes);
 
-// Serve static files from React app in production
+// Serve static files from React app in production (only if enabled)
 if (process.env.NODE_ENV === 'production' && process.env.SERVE_CLIENT !== 'false') {
   const clientBuildPath = path.join(__dirname, '../../client/build');
   app.use(express.static(clientBuildPath));
@@ -403,13 +406,21 @@ if (process.env.NODE_ENV === 'production' && process.env.SERVE_CLIENT !== 'false
     }
   });
 } else {
-  // 404 handler for API routes in development
-  app.use('/api/*', (req, res) => {
-    res.status(404).json({
-      error: 'Not Found',
-      message: `Route ${req.originalUrl} not found`,
-      timestamp: new Date().toISOString()
-    });
+  // 404 handler for backend-only service (separate frontend deployment)
+  app.use('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+      res.status(404).json({
+        error: 'Not Found',
+        message: `API route ${req.originalUrl} not found`,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(404).json({
+        error: 'Not Found',
+        message: 'This is the API server. Please use the frontend application.',
+        timestamp: new Date().toISOString()
+      });
+    }
   });
 }
 

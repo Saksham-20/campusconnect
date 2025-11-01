@@ -13,7 +13,7 @@ class FileService {
         accessKey: process.env.MINIO_ACCESS_KEY || 'admin',
         secretKey: process.env.MINIO_SECRET_KEY || 'password123'
       });
-      this.bucketName = process.env.MINIO_BUCKET || 'campusconnect';
+      this.bucketName = process.env.MINIO_BUCKET || 'edumapping';
       this.initializeBucket();
     }
   }

@@ -3,7 +3,7 @@
 const { execSync } = require('child_process');
 const path = require('path');
 
-console.log('🌱 Starting CampusConnect Database Seeding...\n');
+console.log('🌱 Starting EduMapping Database Seeding...\n');
 
 const seeders = [
   '01-organizations.js',
@@ -58,7 +58,7 @@ async function runSeeders() {
     console.log('   • 12 File uploads (resumes, projects, research)');
     console.log('   • 15 Audit Log entries');
     
-    console.log('\n🚀 Your CampusConnect platform is now populated with comprehensive dummy data!');
+    console.log('\n🚀 Your EduMapping platform is now populated with comprehensive dummy data!');
     console.log('📖 Check README-DUMMY-DATA.md for detailed information about all features.');
     console.log('📸 Perfect for taking screenshots and college presentations!');
 

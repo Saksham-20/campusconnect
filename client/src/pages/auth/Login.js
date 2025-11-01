@@ -222,7 +222,7 @@ const Login = () => {
                 <strong>TPO:</strong> tpo@techuniversity.edu / password123
               </div>
               <div>
-                <strong>Admin:</strong> admin@campusconnect.com / password123
+                <strong>Admin:</strong> admin@edumapping.com / password123
               </div>
             </div>
           </div>

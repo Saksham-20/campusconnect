@@ -1,7 +1,7 @@
 // client/src/services/auth.js
 import api from './api';
 
-const TOKEN_KEY = 'campusconnect_tokens';
+const TOKEN_KEY = 'edumapping_tokens';
 
 class AuthService {
   login = async (email, password) => {

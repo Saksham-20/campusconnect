@@ -1,7 +1,7 @@
 {
-  "name": "campusconnect-client",
+  "name": "edumapping-client",
   "version": "1.0.0",
-  "description": "CampusConnect frontend - React app for campus recruitment platform",
+  "description": "EduMapping frontend - React app for campus recruitment platform",
   "private": true,
   "dependencies": {
     "@headlessui/react": "^1.7.17",

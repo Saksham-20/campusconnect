@@ -3,9 +3,9 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: campusconnect_postgres
+    container_name: edumapping_postgres
     environment:
-      POSTGRES_DB: campusconnect_dev
+      POSTGRES_DB: edumapping_dev
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
     ports:
@@ -14,21 +14,21 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./server/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - campusconnect
+      - edumapping
 
   redis:
     image: redis:7-alpine
-    container_name: campusconnect_redis
+    container_name: edumapping_redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - campusconnect
+      - edumapping
 
   minio:
     image: minio/minio:latest
-    container_name: campusconnect_minio
+    container_name: edumapping_minio
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password123
@@ -39,26 +39,26 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     networks:
-      - campusconnect
+      - edumapping
 
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: campusconnect_mailhog
+    container_name: edumapping_mailhog
     ports:
       - "1025:1025"  # SMTP
       - "8025:8025"  # Web UI
     networks:
-      - campusconnect
+      - edumapping
 
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: campusconnect_server
+    container_name: edumapping_server
     environment:
       NODE_ENV: development
       PORT: 5000
-      DATABASE_URL: postgres://postgres:postgres123@postgres:5432/campusconnect_dev
+      DATABASE_URL: postgres://postgres:postgres123@postgres:5432/edumapping_dev
       REDIS_URL: redis://redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
       JWT_REFRESH_SECRET: your-super-secret-refresh-key-change-in-production
@@ -82,7 +82,7 @@ services:
       - minio
       - mailhog
     networks:
-      - campusconnect
+      - edumapping
     develop:
       watch:
         - action: sync
@@ -93,7 +93,7 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
-    container_name: campusconnect_client
+    container_name: edumapping_client
     environment:
       REACT_APP_API_URL: http://localhost:5000/api
       REACT_APP_WS_URL: ws://localhost:5000
@@ -106,7 +106,7 @@ services:
     depends_on:
       - server
     networks:
-      - campusconnect
+      - edumapping
     develop:
       watch:
         - action: sync
@@ -119,5 +119,5 @@ volumes:
   minio_data:
 
 networks:
-  campusconnect:
+  edumapping:
     driver: bridge

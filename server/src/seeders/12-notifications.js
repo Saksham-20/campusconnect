@@ -79,8 +79,8 @@ module.exports = {
       {
         id: 5,
         user_id: 7, // Bob Martinez
-        title: 'Welcome to CampusConnect',
-        message: 'Welcome to CampusConnect! Complete your profile to get personalized job recommendations and connect with top companies.',
+        title: 'Welcome to EduMapping',
+        message: 'Welcome to EduMapping! Complete your profile to get personalized job recommendations and connect with top companies.',
         notification_type: 'general',
         is_read: false,
         priority: 'low',

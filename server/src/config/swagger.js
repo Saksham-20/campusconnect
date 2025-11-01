@@ -5,13 +5,13 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'CampusConnect API',
+      title: 'EduMapping API',
       version: '1.0.0',
       description: 'A comprehensive campus recruitment platform API that connects students with recruiters and manages the entire placement process.',
       contact: {
-        name: 'CampusConnect Team',
-        email: 'support@campusconnect.com',
-        url: 'https://campusconnect.com'
+        name: 'EduMapping Team',
+        email: 'support@edumapping.com',
+        url: 'https://edumapping.com'
       },
       license: {
         name: 'MIT',
@@ -21,7 +21,7 @@ const options = {
     servers: [
       {
         url: process.env.NODE_ENV === 'production' 
-          ? 'https://api.campusconnect.com' 
+          ? 'https://api.edumapping.com' 
           : 'http://localhost:5000',
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server'
       }

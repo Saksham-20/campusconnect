@@ -88,7 +88,7 @@ const LandingPage = () => {
         </div>
         <div className="hero-content">
           <h1 className="hero-title">
-            Welcome to <span className="gradient-text">CampusConnect</span>
+            Welcome to <span className="gradient-text">EduMapping</span>
           </h1>
           <p className="hero-subtitle">
             The Ultimate Campus Management Platform - Connecting Students, Recruiters, and Educational Institutions
@@ -184,7 +184,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="cta-content">
             <h2>Ready to transform your campus?</h2>
-            <p>Join hundreds of institutions already using CampusConnect to improve student outcomes and streamline operations.</p>
+            <p>Join hundreds of institutions already using EduMapping to improve student outcomes and streamline operations.</p>
             <div className="cta-buttons">
               <Link to="/login" state={{ from: { pathname: '/dashboard' } }} className="btn btn-primary">
                 Get Started
@@ -203,7 +203,7 @@ const LandingPage = () => {
     <div className="page-content">
       <section className="features-hero">
         <div className="container">
-          <h1 className="page-title">CampusConnect Features</h1>
+          <h1 className="page-title">EduMapping Features</h1>
           <p className="page-subtitle">
             Comprehensive tools for modern campus management and student success
           </p>
@@ -299,7 +299,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="cta-content">
             <h2>Ready to Transform Your Campus?</h2>
-            <p>Join hundreds of institutions already using CampusConnect to improve student outcomes</p>
+            <p>Join hundreds of institutions already using EduMapping to improve student outcomes</p>
             <div className="cta-buttons">
               <Link to="/login" state={{ from: { pathname: '/dashboard' } }} className="btn btn-primary">
                 Start Free Trial
@@ -508,9 +508,9 @@ const LandingPage = () => {
       <nav className="navbar">
         <div className="nav-container">
           <div className="nav-logo">
-            <img src="/full-logo.svg" alt="CampusConnect" className="logo" />
+            <img src="/full-logo.svg" alt="EduMapping" className="logo" />
             <div className="brand-info">
-              <span className="product-name">CampusConnect</span>
+              <span className="product-name">EduMapping</span>
               <span className="company-name">by Globoniks</span>
             </div>
           </div>

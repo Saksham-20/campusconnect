@@ -1,7 +1,7 @@
 {
-  "name": "campusconnect-server",
+  "name": "edumapping-server",
   "version": "1.0.0",
-  "description": "CampusConnect backend API server for campus recruitment platform",
+  "description": "EduMapping backend API server for campus recruitment platform",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -34,7 +34,7 @@
     "express",
     "nodejs"
   ],
-  "author": "CampusConnect Team",
+  "author": "EduMapping Team",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -74,10 +74,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/campusconnect.git"
+    "url": "git+https://github.com/yourusername/edumapping.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/campusconnect/issues"
+    "url": "https://github.com/yourusername/edumapping/issues"
   },
-  "homepage": "https://github.com/yourusername/campusconnect#readme"
+  "homepage": "https://github.com/yourusername/edumapping#readme"
 }

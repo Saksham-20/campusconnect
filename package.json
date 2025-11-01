@@ -1,7 +1,7 @@
 {
-  "name": "campusconnect",
+  "name": "edumapping",
   "version": "1.0.0",
-  "description": "CampusConnect - Campus Recruitment Platform",
+  "description": "EduMapping - Campus Recruitment Platform",
   "private": true,
   "scripts": {
     "install:server": "cd server && npm install",

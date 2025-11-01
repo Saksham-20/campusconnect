@@ -17,7 +17,7 @@ class EmailService {
   async sendEmail(to, subject, html, text) {
     try {
       const mailOptions = {
-        from: process.env.FROM_EMAIL || 'noreply@campusconnect.com',
+        from: process.env.FROM_EMAIL || 'noreply@edumapping.com',
         to,
         subject,
         html,
@@ -34,12 +34,12 @@ class EmailService {
   }
 
   async sendWelcomeEmail(user) {
-    const subject = 'Welcome to CampusConnect!';
+    const subject = 'Welcome to EduMapping!';
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1 style="color: #2563eb;">Welcome to CampusConnect!</h1>
+        <h1 style="color: #2563eb;">Welcome to EduMapping!</h1>
         <p>Hi ${user.firstName},</p>
-        <p>Welcome to CampusConnect, your gateway to amazing career opportunities!</p>
+        <p>Welcome to EduMapping, your gateway to amazing career opportunities!</p>
         <p>Your account has been successfully created. You can now:</p>
         <ul>
           <li>Browse and apply for jobs</li>
@@ -53,21 +53,21 @@ class EmailService {
                   text-decoration: none; border-radius: 6px; display: inline-block;">
           Complete Your Profile
         </a>
-        <p>Best regards,<br>The CampusConnect Team</p>
+        <p>Best regards,<br>The EduMapping Team</p>
       </div>
     `;
-    const text = `Welcome to CampusConnect! Complete your profile at ${process.env.FRONTEND_URL}/profile`;
+    const text = `Welcome to EduMapping! Complete your profile at ${process.env.FRONTEND_URL}/profile`;
 
     return this.sendEmail(user.email, subject, html, text);
   }
 
   async sendPasswordResetEmail(email, resetToken) {
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    const subject = 'Reset Your Password - CampusConnect';
+    const subject = 'Reset Your Password - EduMapping';
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #2563eb;">Reset Your Password</h1>
-        <p>You requested a password reset for your CampusConnect account.</p>
+        <p>You requested a password reset for your EduMapping account.</p>
         <p>Click the button below to reset your password:</p>
         <a href="${resetUrl}" 
            style="background-color: #2563eb; color: white; padding: 12px 24px; 
@@ -76,7 +76,7 @@ class EmailService {
         </a>
         <p>This link will expire in 1 hour.</p>
         <p>If you didn't request this, please ignore this email.</p>
-        <p>Best regards,<br>The CampusConnect Team</p>
+        <p>Best regards,<br>The EduMapping Team</p>
       </div>
     `;
     const text = `Reset your password: ${resetUrl}`;
@@ -110,7 +110,7 @@ class EmailService {
                   text-decoration: none; border-radius: 6px; display: inline-block;">
           View Applications
         </a>
-        <p>Best regards,<br>The CampusConnect Team</p>
+        <p>Best regards,<br>The EduMapping Team</p>
       </div>
     `;
     const text = `Your application for ${job.title} at ${company.name} status: ${newStatus}`;
@@ -137,7 +137,7 @@ class EmailService {
                   text-decoration: none; border-radius: 6px; display: inline-block;">
           View Job Details
         </a>
-        <p>Best regards,<br>The CampusConnect Team</p>
+        <p>Best regards,<br>The EduMapping Team</p>
       </div>
     `;
     const text = `New job: ${job.title} at ${company.name}. View at ${process.env.FRONTEND_URL}/jobs/${job.id}`;
@@ -168,7 +168,7 @@ class EmailService {
                   text-decoration: none; border-radius: 6px; display: inline-block;">
           View Event Details
         </a>
-        <p>Best regards,<br>The CampusConnect Team</p>
+        <p>Best regards,<br>The EduMapping Team</p>
       </div>
     `;
     const text = `Event reminder: ${event.title} on ${eventDate} at ${eventTime}`;
