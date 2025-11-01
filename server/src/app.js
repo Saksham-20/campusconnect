@@ -1,5 +1,6 @@
 // server/src/app.js
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -384,14 +385,33 @@ app.use('/api/achievements', achievementRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/approvals', approvalRoutes);
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: `Route ${req.originalUrl} not found`,
-    timestamp: new Date().toISOString()
+// Serve static files from React app in production
+if (process.env.NODE_ENV === 'production' && process.env.SERVE_CLIENT !== 'false') {
+  const clientBuildPath = path.join(__dirname, '../../client/build');
+  app.use(express.static(clientBuildPath));
+  
+  // Handle React routing - return all non-API requests to React app
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
+    } else {
+      res.status(404).json({
+        error: 'Not Found',
+        message: `Route ${req.originalUrl} not found`,
+        timestamp: new Date().toISOString()
+      });
+    }
   });
-});
+} else {
+  // 404 handler for API routes in development
+  app.use('/api/*', (req, res) => {
+    res.status(404).json({
+      error: 'Not Found',
+      message: `Route ${req.originalUrl} not found`,
+      timestamp: new Date().toISOString()
+    });
+  });
+}
 
 // Global error handler
 app.use(errorHandler);

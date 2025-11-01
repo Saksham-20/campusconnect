@@ -5,6 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "build": "npm install && npm run db:migrate:prod",
     "build:prod": "npm install && npm run db:migrate:prod && npm run db:seed:prod",
     "dev": "nodemon src/server.js",
     "test": "jest",

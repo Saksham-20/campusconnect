@@ -1,4 +1,17 @@
 {
+  "name": "campusconnect",
+  "version": "1.0.0",
+  "description": "CampusConnect - Campus Recruitment Platform",
+  "private": true,
+  "scripts": {
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "install:all": "npm run install:server && npm run install:client",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "start:server": "cd server && npm start",
+    "start:client": "cd client && npm start"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -31,5 +44,9 @@
     "sequelize-cli": "^6.6.2",
     "supertest": "^7.0.0",
     "tailwindcss": "^3.4.7"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
