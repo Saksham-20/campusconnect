@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const jwt = require('jsonwebtoken');
 
 // Use models for both development and production
 const models = require('./models');
@@ -73,16 +74,80 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Rate limiting
+// Rate limiting with user-based keys for authenticated requests
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || (process.env.NODE_ENV === 'production' ? 500 : 100), // Higher limit in production
   message: {
     error: 'Too many requests from this IP, please try again later'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  // Use user ID for authenticated requests, IP for unauthenticated
+  keyGenerator: (req) => {
+    // Try to extract user ID from JWT token
+    try {
+      const authHeader = req.headers.authorization;
+      if (authHeader) {
+        const token = authHeader.split(' ')[1]; // Bearer TOKEN
+        if (token) {
+          const decoded = jwt.decode(token); // Decode without verification (for rate limiting only)
+          if (decoded && decoded.userId) {
+            return `user_${decoded.userId}`;
+          }
+        }
+      }
+    } catch (error) {
+      // If token extraction fails, fall back to IP
+    }
+    // If user is authenticated (from middleware), use their ID
+    if (req.user && req.user.id) {
+      return `user_${req.user.id}`;
+    }
+    // For unauthenticated requests, use IP
+    return req.ip || req.connection.remoteAddress;
+  },
+  // Skip rate limiting for health check
+  skip: (req) => {
+    return req.path === '/api/health';
+  }
 });
+
+// More lenient limiter for frequent auth endpoints
+// Extracts user ID from JWT token without full authentication
+const authCheckLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute (frequent auth checks)
+  message: {
+    error: 'Too many authentication check requests, please slow down'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Try to extract user ID from JWT token
+    try {
+      const authHeader = req.headers.authorization;
+      if (authHeader) {
+        const token = authHeader.split(' ')[1]; // Bearer TOKEN
+        if (token) {
+          const decoded = jwt.decode(token); // Decode without verification (for rate limiting only)
+          if (decoded && decoded.userId) {
+            return `user_auth_${decoded.userId}`;
+          }
+        }
+      }
+    } catch (error) {
+      // If token extraction fails, fall back to IP
+    }
+    // For unauthenticated requests or if token extraction fails, use IP
+    return req.ip || req.connection.remoteAddress;
+  },
+  skipSuccessfulRequests: true // Don't count successful requests
+});
+
+// Apply auth check limiter to /auth/me endpoint
+app.use('/api/auth/me', authCheckLimiter);
+// Apply general limiter to all other API routes
 app.use('/api/', limiter);
 
 // Body parsing middleware

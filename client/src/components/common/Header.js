@@ -137,12 +137,12 @@ const Header = () => {
             {/* Logo and Brand */}
             <div className="flex items-center">
               <Link to="/" className="flex items-center group">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-2.5 mr-3 transition-transform duration-200 group-hover:scale-110 shadow-lg">
-                  <span className="font-bold text-lg">EM</span>
-                </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  EduMapping
-                </span>
+                <img 
+                  src="/logo-cropped.svg" 
+                  alt="Logo" 
+                  className="h-32 w-auto transition-transform duration-200 group-hover:scale-110"
+                  style={{ filter: 'none' }}
+                />
               </Link>
             </div>
 

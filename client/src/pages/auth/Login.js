@@ -101,9 +101,11 @@ const Login = () => {
         <div>
           {/* Logo */}
           <div className="flex justify-center">
-            <div className="bg-blue-600 text-white rounded-lg p-3">
-              <span className="font-bold text-2xl">CC</span>
-            </div>
+            <img 
+              src="/logo-cropped.svg" 
+              alt="Logo" 
+              className="h-16 w-auto"
+            />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
@@ -222,7 +224,7 @@ const Login = () => {
                 <strong>TPO:</strong> tpo@techuniversity.edu / password123
               </div>
               <div>
-                <strong>Admin:</strong> admin@edumapping.com / password123
+                <strong>Admin:</strong> admin@campusconnect.com / password123
               </div>
             </div>
           </div>

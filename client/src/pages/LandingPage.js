@@ -184,7 +184,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="cta-content">
             <h2>Ready to transform your campus?</h2>
-            <p>Join hundreds of institutions already using EduMapping to improve student outcomes and streamline operations.</p>
+            <p>Join hundreds of institutions already using our platform to improve student outcomes and streamline operations.</p>
             <div className="cta-buttons">
               <Link to="/login" state={{ from: { pathname: '/dashboard' } }} className="btn btn-primary">
                 Get Started
@@ -203,7 +203,7 @@ const LandingPage = () => {
     <div className="page-content">
       <section className="features-hero">
         <div className="container">
-          <h1 className="page-title">EduMapping Features</h1>
+          <h1 className="page-title">Features</h1>
           <p className="page-subtitle">
             Comprehensive tools for modern campus management and student success
           </p>
@@ -299,7 +299,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="cta-content">
             <h2>Ready to Transform Your Campus?</h2>
-            <p>Join hundreds of institutions already using EduMapping to improve student outcomes</p>
+            <p>Join hundreds of institutions already using our platform to improve student outcomes</p>
             <div className="cta-buttons">
               <Link to="/login" state={{ from: { pathname: '/dashboard' } }} className="btn btn-primary">
                 Start Free Trial
@@ -508,11 +508,11 @@ const LandingPage = () => {
       <nav className="navbar">
         <div className="nav-container">
           <div className="nav-logo">
-            <img src="/full-logo.svg" alt="EduMapping" className="logo" />
-            <div className="brand-info">
-              <span className="product-name">EduMapping</span>
-              <span className="company-name">by Globoniks</span>
-            </div>
+            <img 
+              src="/logo-cropped.svg" 
+              alt="Logo" 
+              style={{ height: '70px', width: 'auto', filter: 'none' }}
+            />
           </div>
           <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
             <button 
@@ -569,8 +569,7 @@ const LandingPage = () => {
           <div className="footer-content">
             <div className="footer-section">
               <div className="footer-logo">
-                <img src="/full-logo.svg" alt="Globoniks" className="logo" />
-                <span className="company-name">GLOBONIKS</span>
+                <img src="/logo.svg" alt="Logo" className="logo" />
               </div>
               <p>Empowering educational excellence through innovative technology solutions.</p>
             </div>

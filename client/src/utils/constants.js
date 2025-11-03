@@ -308,10 +308,10 @@ export const DEFAULT_AVATAR_URL = (name) =>
 
 // Local Storage Keys
 export const STORAGE_KEYS = {
-  AUTH_TOKENS: 'edumapping_tokens',
-  USER_PREFERENCES: 'edumapping_preferences',
-  THEME: 'edumapping_theme',
-  LANGUAGE: 'edumapping_language'
+  AUTH_TOKENS: 'campusconnect_tokens',
+  USER_PREFERENCES: 'campusconnect_preferences',
+  THEME: 'campusconnect_theme',
+  LANGUAGE: 'campusconnect_language'
 };
 
 // Date Formats
@@ -386,14 +386,14 @@ export const FEATURES = {
 
 // App Configuration
 export const APP_CONFIG = {
-  NAME: 'EduMapping',
+  NAME: 'CampusConnect',
   VERSION: '1.0.0',
-  COMPANY: 'EduMapping Inc.',
-  SUPPORT_EMAIL: 'support@edumapping.com',
+  COMPANY: 'CampusConnect Inc.',
+  SUPPORT_EMAIL: 'support@campusconnect.com',
   PRIVACY_POLICY_URL: '/privacy',
   TERMS_OF_SERVICE_URL: '/terms',
-  GITHUB_URL: 'https://github.com/edumapping',
-  DOCUMENTATION_URL: 'https://docs.edumapping.com'
+  GITHUB_URL: 'https://github.com/campusconnect',
+  DOCUMENTATION_URL: 'https://docs.campusconnect.com'
 };
 
 export default {
