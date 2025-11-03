@@ -1,6 +1,29 @@
 // server/src/config/database.js
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
+// Always load .env file (for migrations and CLI tools)
+const path = require('path');
+const fs = require('fs');
+
+// Try to find .env file in multiple locations
+const envPaths = [
+  path.join(__dirname, '../../.env'),  // server/.env
+  path.join(__dirname, '../../../.env'), // root/.env
+  path.join(process.cwd(), '.env'),      // current working directory
+  '/var/www/campusconnect/server/.env'  // absolute path
+];
+
+let envLoaded = false;
+for (const envPath of envPaths) {
+  if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+    envLoaded = true;
+    console.log(`🔍 Loaded .env from: ${envPath}`);
+    break;
+  }
+}
+
+if (!envLoaded) {
+  console.warn('⚠️  No .env file found in expected locations, using environment variables only');
+  require('dotenv').config(); // Try default location anyway
 }
 
 // Helper function to parse DATABASE_URL for production
@@ -60,6 +83,51 @@ function parseDatabaseUrl() {
   }
 }
 
+// Production config - prefers individual env vars, falls back to DATABASE_URL
+let productionConfig;
+
+// Check if we have individual DB variables (more reliable)
+if (process.env.DB_PASSWORD && process.env.DB_USERNAME) {
+  productionConfig = {
+    username: String(process.env.DB_USERNAME),
+    password: String(process.env.DB_PASSWORD),
+    database: String(process.env.DB_NAME || 'edumapping_prod'),
+    host: String(process.env.DB_HOST || 'localhost'),
+    port: parseInt(process.env.DB_PORT || '5432'),
+    dialect: 'postgres',
+    dialectOptions: (process.env.PGSSLMODE === 'require' || process.env.DATABASE_SSL === 'true')
+      ? { ssl: { require: true, rejectUnauthorized: false } }
+      : {},
+    logging: false,
+    pool: {
+      max: 20,
+      min: 5,
+      acquire: 60000,
+      idle: 10000
+    }
+  };
+  console.log('🔍 Using individual DB environment variables');
+} else if (process.env.DATABASE_URL) {
+  // Fall back to DATABASE_URL if individual vars not available
+  productionConfig = parseDatabaseUrl();
+} else {
+  throw new Error('Either DB_PASSWORD/DB_USERNAME or DATABASE_URL must be set');
+}
+
+// Validate production config has required fields
+if (!productionConfig.password || productionConfig.password === '') {
+  console.error('❌ Database password is missing or empty');
+  throw new Error('Database password is required');
+}
+
+console.log('🔍 Production DB config:', { 
+  username: productionConfig.username, 
+  host: productionConfig.host, 
+  port: productionConfig.port, 
+  database: productionConfig.database,
+  hasPassword: !!productionConfig.password 
+});
+
 module.exports = {
   development: {
     username: process.env.DB_USERNAME || 'postgres',
@@ -85,5 +153,5 @@ module.exports = {
     dialect: 'postgres',
     logging: false
   },
-  production: parseDatabaseUrl
+  production: productionConfig
 };

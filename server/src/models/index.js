@@ -6,12 +6,14 @@ const env = process.env.NODE_ENV || 'development';
 console.log('🔍 Environment:', env);
 console.log('🔍 DATABASE_URL set:', !!process.env.DATABASE_URL);
 
-// Get the appropriate config - call the function if it's production
+// Get the appropriate config
 let dbConfig;
-if (env === 'production') {
-  dbConfig = config[env](); // Call the function for production
+if (typeof config[env] === 'function') {
+  // If it's a function (old format), call it
+  dbConfig = config[env]();
 } else {
-  dbConfig = config[env]; // Use the object directly for development/test
+  // If it's already an object (new format), use it directly
+  dbConfig = config[env];
 }
 
 console.log('🔍 Config being used:', dbConfig ? 'Found' : 'Not found');
