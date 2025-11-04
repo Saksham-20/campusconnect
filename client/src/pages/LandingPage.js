@@ -93,6 +93,16 @@ const LandingPage = () => {
           <p className="hero-subtitle">
             The Ultimate Campus Management Platform - Connecting Students, Recruiters, and Educational Institutions
           </p>
+          <p style={{ 
+            marginTop: '1rem', 
+            fontSize: '1.1rem', 
+            fontWeight: '700',
+            color: '#000000',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase'
+          }}>
+            Powered by <span style={{ color: '#9333ea' }}>Globoniks</span>
+          </p>
           <div className="hero-stats">
             <div className="stat-item">
               <div className="stat-number">7500+</div>
