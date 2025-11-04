@@ -109,6 +109,14 @@
   box-shadow: 0 10px 25px rgba(21, 99, 149, 0.3);
 }
 
+@media (max-width: 768px) {
+  .nav-cta {
+    width: 100%;
+    text-align: center;
+    margin-top: 1rem;
+  }
+}
+
 .nav-toggle {
   display: none;
   flex-direction: column;
@@ -119,9 +127,15 @@
 .nav-toggle span {
   width: 25px;
   height: 3px;
-  background: #ffffff;
+  background: #1a1a1a;
   border-radius: 2px;
   transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .nav-toggle span {
+    background: #1a1a1a;
+  }
 }
 
 /* Main Content */
@@ -916,12 +930,14 @@
     left: -100%;
     width: 100%;
     height: calc(100vh - 80px);
-    background: rgba(15, 15, 35, 0.98);
+    background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
     flex-direction: column;
     justify-content: flex-start;
     padding-top: 2rem;
     transition: left 0.3s ease;
+    z-index: 999;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
   .nav-menu.active {
@@ -930,14 +946,25 @@
 
   .nav-toggle {
     display: flex;
+    z-index: 1000;
   }
 
   .hero-title {
-    font-size: 2.8rem;
+    font-size: 2.5rem;
+    padding: 0 1rem;
   }
 
   .hero-subtitle {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    padding: 0 1rem;
+  }
+
+  .hero-content {
+    padding: 0 1rem;
+  }
+
+  .nav-logo img {
+    height: 35px !important;
   }
 
   .stat-number {
@@ -947,6 +974,14 @@
   .hero-buttons {
     flex-direction: column;
     align-items: center;
+    gap: 1rem;
+    width: 100%;
+    padding: 0 1rem;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+    max-width: 280px;
   }
 
   .about-grid,
@@ -958,6 +993,12 @@
 
   .hero-stats {
     gap: 2rem;
+    flex-wrap: wrap;
+    padding: 1rem 0;
+  }
+
+  .stat-item {
+    min-width: 120px;
   }
 
   .stat-number {
@@ -967,6 +1008,19 @@
   .footer-content {
     grid-template-columns: 1fr;
     gap: 2rem;
+  }
+
+  .navbar {
+    padding: 0.5rem 0;
+  }
+
+  .nav-container {
+    padding: 0 1rem;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .section-title {
@@ -996,7 +1050,8 @@
   }
 
   .hero-subtitle {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    padding: 0 0.5rem;
   }
 
   .stat-number {
@@ -1007,5 +1062,55 @@
   .service-card,
   .contact-form-container {
     padding: 1.5rem;
+  }
+
+  .hero-buttons {
+    width: 100%;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* Developer Badge */
+.developer-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  color: #156395;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  border: 1px solid rgba(21, 99, 149, 0.2);
+}
+
+.developer-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 1);
+}
+
+.developer-name {
+  font-weight: 700;
+  color: #9333ea;
+}
+
+/* Developer Badge Responsive */
+@media (max-width: 480px) {
+  .developer-badge {
+    bottom: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
   }
 }

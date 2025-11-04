@@ -91,7 +91,7 @@ const LandingPage = () => {
             Welcome to <span className="gradient-text">EduMapping</span>
           </h1>
           <p className="hero-subtitle">
-            The Ultimate Campus Management Platform - Connecting Students, Recruiters, and Educational Institutions
+            Our Objective: To make youth Job Ready with essential Employability Skills
           </p>
           <p style={{ 
             marginTop: '1rem', 
@@ -101,7 +101,7 @@ const LandingPage = () => {
             letterSpacing: '0.05em',
             textTransform: 'uppercase'
           }}>
-            Powered by <span style={{ color: '#9333ea' }}>Globoniks</span>
+            Brand by <span style={{ color: '#156395' }}>eTraze</span>
           </p>
           <div className="hero-stats">
             <div className="stat-item">
@@ -124,6 +124,33 @@ const LandingPage = () => {
             <button className="btn btn-secondary" onClick={() => handlePageChange('features')}>
               Explore Features
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Modules Section */}
+      <section className="features">
+        <div className="container">
+          <div className="features-header">
+            <h2 className="section-title">Our Training Modules</h2>
+            <p className="section-subtitle">Comprehensive modules designed to make youth job-ready with essential employability skills</p>
+          </div>
+          <div className="features-grid">
+            <div className="feature-card animate-on-scroll">
+              <div className="feature-icon">💬</div>
+              <h3>Soft Skills</h3>
+              <p>Communication, Teamwork, Leadership, Time Management</p>
+            </div>
+            <div className="feature-card animate-on-scroll">
+              <div className="feature-icon">🌟</div>
+              <h3>Life Skills</h3>
+              <p>Confidence Building, Decision Making, Emotional Intelligence</p>
+            </div>
+            <div className="feature-card animate-on-scroll">
+              <div className="feature-icon">💼</div>
+              <h3>Workplace Readiness</h3>
+              <p>Handling Real-world Challenges, Problem Solving, Adaptability</p>
+            </div>
           </div>
         </div>
       </section>
@@ -176,7 +203,7 @@ const LandingPage = () => {
           <h2 className="section-title">What Our Partners Say</h2>
           <div className="testimonial-card animate-on-scroll">
             <p className="testimonial-text">
-              "Globoniks has revolutionized our educational technology infrastructure. 
+              "EduMapping has revolutionized our educational technology infrastructure. 
               Their innovative solutions have significantly improved our operational efficiency."
             </p>
             <div className="testimonial-author">
@@ -328,9 +355,9 @@ const LandingPage = () => {
     <div className="page-content">
       <section className="about-hero">
         <div className="container">
-          <h1 className="page-title">About Globoniks</h1>
+          <h1 className="page-title">About EduMapping</h1>
           <p className="page-subtitle">
-            Pioneering the future of educational technology
+            Making youth job-ready with essential employability skills
           </p>
         </div>
       </section>
@@ -341,16 +368,26 @@ const LandingPage = () => {
             <div className="about-text animate-on-scroll">
               <h2>Our Mission</h2>
               <p>
-                At Globoniks, we are dedicated to transforming the educational landscape 
-                through innovative technology solutions. We believe that every institution 
-                deserves access to cutting-edge tools that enhance learning experiences 
-                and streamline operations.
+                Our objective is to make youth job-ready with essential employability skills. 
+                We believe that every student deserves access to comprehensive training that 
+                prepares them for real-world workplace challenges and enhances their career prospects.
               </p>
               <p>
-                Our team of experts works tirelessly to develop solutions that not only 
-                meet today's challenges but anticipate tomorrow's needs. We are committed 
-                to excellence, innovation, and the success of our educational partners.
+                Through our three core modules - Soft Skills, Life Skills, and Workplace Readiness - 
+                we equip students with the tools they need to succeed. We are committed to 
+                excellence, innovation, and the success of our students and educational partners.
               </p>
+              <h2 style={{ marginTop: '2rem' }}>Our Training Modules</h2>
+              <div style={{ marginTop: '1rem' }}>
+                <h3 style={{ color: '#156395', marginBottom: '0.5rem' }}>Soft Skills</h3>
+                <p>Communication, Teamwork, Leadership, Time Management</p>
+                
+                <h3 style={{ color: '#156395', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Life Skills</h3>
+                <p>Confidence Building, Decision Making, Emotional Intelligence</p>
+                
+                <h3 style={{ color: '#156395', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Workplace Readiness</h3>
+                <p>Handling Real-world Challenges, Problem Solving, Adaptability</p>
+              </div>
             </div>
             <div className="about-image animate-on-scroll">
               <div className="image-placeholder">
@@ -468,21 +505,21 @@ const LandingPage = () => {
               <h2>Get In Touch</h2>
               <p>
                 Ready to transform your educational technology? Contact us today 
-                to discuss how Globoniks can help your institution achieve its goals.
+                to discuss how EduMapping can help your institution achieve its goals.
               </p>
               <div className="contact-details">
                 <div className="contact-item">
                   <div className="contact-icon">📧</div>
                   <div>
                     <h4>Email</h4>
-                    <p>info@globoniks.com</p>
+                    <p>info@edumapping.com</p>
                   </div>
                 </div>
                 <div className="contact-item">
                   <div className="contact-icon">🌐</div>
                   <div>
                     <h4>Website</h4>
-                    <p>www.globoniks.com</p>
+                    <p>www.edumapping.com</p>
                   </div>
                 </div>
               </div>
@@ -518,11 +555,16 @@ const LandingPage = () => {
       <nav className="navbar">
         <div className="nav-container">
           <div className="nav-logo">
-            <img 
-              src="/logo-cropped.svg" 
-              alt="Logo" 
-              style={{ height: '70px', width: 'auto', filter: 'none' }}
-            />
+            <button 
+              onClick={() => handlePageChange('home')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              <img 
+                src="/logo-cropped.svg" 
+                alt="Logo" 
+                style={{ height: '40px', width: 'auto', filter: 'none' }}
+              />
+            </button>
           </div>
           <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
             <button 
@@ -579,9 +621,17 @@ const LandingPage = () => {
           <div className="footer-content">
             <div className="footer-section">
               <div className="footer-logo">
-                <img src="/logo-cropped.svg" alt="Logo" className="logo" />
+                <button 
+                  onClick={() => handlePageChange('home')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  <img src="/logo-cropped.svg" alt="Logo" className="logo" />
+                </button>
               </div>
-              <p>Empowering educational excellence through innovative technology solutions.</p>
+              <p>Making youth job-ready with essential employability skills.</p>
+              <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#64748b' }}>
+                Brand by <span style={{ color: '#156395' }}>eTraze</span>
+              </p>
             </div>
             <div className="footer-section">
               <h3>Quick Links</h3>
@@ -594,16 +644,21 @@ const LandingPage = () => {
             </div>
             <div className="footer-section">
               <h3>Contact Info</h3>
-              <p>info@globoniks.com</p>
-              <p>www.globoniks.com</p>
+              <p>info@edumapping.com</p>
+              <p>www.edumapping.com</p>
               <p>+91 76964 94606</p>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; 2024 Globoniks. All rights reserved.</p>
+            <p>&copy; 2024 EduMapping. All rights reserved.</p>
           </div>
         </div>
       </footer>
+
+      {/* Developer Badge */}
+      <div className="developer-badge">
+        Made by <span className="developer-name">Globoniks</span>
+      </div>
     </div>
   );
 };
