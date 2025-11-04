@@ -563,7 +563,7 @@ const TPOAnalytics = () => {
                           <div className="flex items-center">
                             <img
                               className="h-10 w-10 rounded-full object-cover border-2 border-gray-200"
-                              src={company.logoUrl || `https://ui-avatars.com/api/?name=${company.name}&background=3b82f6&color=fff&size=128`}
+                              src={company.logoUrl || `https://ui-avatars.com/api/?name=${company.name}&background=156395&color=fff&size=128`}
                               alt={company.name}
                             />
                             <div className="ml-4">

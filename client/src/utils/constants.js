@@ -304,7 +304,7 @@ export const STATUS_COLORS = {
 
 // Default Profile Pictures
 export const DEFAULT_AVATAR_URL = (name) => 
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3b82f6&color=fff&size=128`;
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=156395&color=fff&size=128`;
 
 // Local Storage Keys
 export const STORAGE_KEYS = {

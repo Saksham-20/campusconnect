@@ -118,9 +118,9 @@ const Header = () => {
   const getRoleColor = (role) => {
     const colors = {
       admin: 'bg-red-100 text-red-800',
-      tpo: 'bg-blue-100 text-blue-800',
+      tpo: 'bg-primary-100 text-primary-800',
       recruiter: 'bg-purple-100 text-purple-800',
-      student: 'bg-green-100 text-green-800'
+      student: 'bg-secondary-100 text-secondary-800'
     };
     return colors[role] || 'bg-gray-100 text-gray-800';
   };
@@ -140,8 +140,8 @@ const Header = () => {
                 <img 
                   src="/logo-cropped.svg" 
                   alt="Logo" 
-                  className="h-32 w-auto transition-transform duration-200 group-hover:scale-110"
-                  style={{ filter: 'none' }}
+                  className="w-auto transition-transform duration-200 group-hover:scale-110"
+                  style={{ height: '50px', filter: 'none' }}
                 />
               </Link>
             </div>
@@ -156,8 +156,8 @@ const Header = () => {
                     to={item.href}
                     className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       item.current
-                        ? 'text-blue-600 bg-blue-50 border border-blue-200 shadow-sm'
-                        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50 hover:border hover:border-blue-200'
+                        ? 'text-primary-600 bg-primary-50 border border-primary-200 shadow-sm'
+                        : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50 hover:border hover:border-primary-200'
                     }`}
                   >
                     <IconComponent className="h-4 w-4 mr-2" />
@@ -172,14 +172,14 @@ const Header = () => {
               <form onSubmit={handleSearch} className="w-full">
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors duration-200" />
                   </div>
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search jobs, companies..."
-                    className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400"
+                    className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all duration-200 hover:border-gray-400"
                   />
                 </div>
               </form>
@@ -214,12 +214,12 @@ const Header = () => {
               <div className="relative">
                 <button
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="flex items-center text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 hover:bg-gray-50 p-1"
+                  className="flex items-center text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:bg-gray-50 p-1"
                 >
                   <div className="relative">
                     <img
-                      className="h-9 w-9 rounded-xl object-cover border-2 border-gray-200 hover:border-blue-300 transition-colors duration-200"
-                      src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=3b82f6&color=fff&size=128`}
+                      className="h-9 w-9 rounded-xl object-cover border-2 border-gray-200 hover:border-primary-300 transition-colors duration-200"
+                      src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=156395&color=fff&size=128`}
                       alt={`${user?.firstName} ${user?.lastName}`}
                     />
                     <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${getRoleColor(user?.role).split(' ')[0]}`}></div>
@@ -241,7 +241,7 @@ const Header = () => {
                         <div className="flex items-center">
                           <img
                             className="h-12 w-12 rounded-xl object-cover border-2 border-gray-200"
-                            src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=3b82f6&color=fff&size=128`}
+                            src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=156395&color=fff&size=128`}
                             alt={`${user?.firstName} ${user?.lastName}`}
                           />
                           <div className="ml-3">
@@ -258,7 +258,7 @@ const Header = () => {
                       <div className="py-1">
                         <Link
                           to="/profile"
-                          className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                          className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200"
                           onClick={() => setIsProfileMenuOpen(false)}
                         >
                           <UserCircleIcon className="h-4 w-4 mr-3" />
@@ -266,7 +266,7 @@ const Header = () => {
                         </Link>
                         <Link
                           to="/settings"
-                          className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                          className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200"
                           onClick={() => setIsProfileMenuOpen(false)}
                         >
                           <Cog6ToothIcon className="h-4 w-4 mr-3" />
@@ -291,7 +291,7 @@ const Header = () => {
               {/* Mobile menu button */}
               <button
                 type="button"
-                className="md:hidden p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all duration-200"
+                className="md:hidden p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
                 {isMobileMenuOpen ? (
@@ -342,7 +342,7 @@ const Header = () => {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search jobs, companies..."
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                     />
                   </div>
                 </form>
@@ -356,8 +356,8 @@ const Header = () => {
                       to={item.href}
                       className={`flex items-center px-3 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
                         item.current
-                          ? 'text-blue-600 bg-blue-50 border border-blue-200'
-                          : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                          ? 'text-primary-600 bg-primary-50 border border-primary-200'
+                          : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'
                       }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >

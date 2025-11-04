@@ -569,7 +569,7 @@ const LandingPage = () => {
           <div className="footer-content">
             <div className="footer-section">
               <div className="footer-logo">
-                <img src="/logo.svg" alt="Logo" className="logo" />
+                <img src="/logo-cropped.svg" alt="Logo" className="logo" />
               </div>
               <p>Empowering educational excellence through innovative technology solutions.</p>
             </div>

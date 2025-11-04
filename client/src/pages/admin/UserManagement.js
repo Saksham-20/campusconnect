@@ -349,7 +349,7 @@ const UserManagement = () => {
                               <div className="flex-shrink-0 h-10 w-10">
                                 <img
                                   className="h-10 w-10 rounded-full object-cover border-2 border-gray-200"
-                                  src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=3b82f6&color=fff&size=128`}
+                                  src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=156395&color=fff&size=128`}
                                   alt={`${user.firstName} ${user.lastName}`}
                                 />
                               </div>
@@ -599,7 +599,7 @@ const UserManagement = () => {
                     <div className="flex items-center space-x-4">
                       <img
                         className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
-                        src={selectedUser.profilePicture || `https://ui-avatars.com/api/?name=${selectedUser.firstName}+${selectedUser.lastName}&background=3b82f6&color=fff&size=128`}
+                        src={selectedUser.profilePicture || `https://ui-avatars.com/api/?name=${selectedUser.firstName}+${selectedUser.lastName}&background=156395&color=fff&size=128`}
                         alt={`${selectedUser.firstName} ${selectedUser.lastName}`}
                       />
                       <div>

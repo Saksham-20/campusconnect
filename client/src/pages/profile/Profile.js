@@ -306,7 +306,7 @@ const handleAddAchievement = async () => {
               <div className="flex items-center space-x-4">
                 <img
                   className="h-16 w-16 rounded-full"
-                  src={profile?.profilePicture || `https://ui-avatars.com/api/?name=${profile?.firstName}+${profile?.lastName}&background=3b82f6&color=fff`}
+                  src={profile?.profilePicture || `https://ui-avatars.com/api/?name=${profile?.firstName}+${profile?.lastName}&background=156395&color=fff`}
                   alt="Profile"
                 />
                 <div>
