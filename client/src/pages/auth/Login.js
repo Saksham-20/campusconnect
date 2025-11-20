@@ -211,24 +211,6 @@ const Login = () => {
             </button>
           </div>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-md">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials</h3>
-            <div className="text-xs text-gray-600 space-y-1">
-              <div>
-                <strong>Student:</strong> john.doe@techuniversity.edu / password123
-              </div>
-              <div>
-                <strong>Recruiter:</strong> recruiter@techcorp.com / password123
-              </div>
-              <div>
-                <strong>TPO:</strong> tpo@techuniversity.edu / password123
-              </div>
-              <div>
-                <strong>Admin:</strong> admin@edumapping.com / password123
-              </div>
-            </div>
-          </div>
         </form>
       </div>
     </div>
