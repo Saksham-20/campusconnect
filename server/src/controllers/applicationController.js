@@ -342,6 +342,8 @@ class ApplicationController {
       const canUpdate = req.user.role === 'admin' ||
                        (req.user.role === 'recruiter' && 
                         application.job.organizationId === req.user.organizationId) ||
+                       (req.user.role === 'tpo' && 
+                        application.student.organizationId === req.user.organizationId) ||
                        (req.user.role === 'student' && 
                         application.studentId === req.user.id && status === 'withdrawn');
 
@@ -518,17 +520,17 @@ class ApplicationController {
         });
       }
 
-      // Check permissions - only recruiters and admins can bulk update
-      if (!['recruiter', 'admin'].includes(req.user.role)) {
+      // Check permissions - recruiters, TPOs, and admins can bulk update
+      if (!['recruiter', 'admin', 'tpo'].includes(req.user.role)) {
         return res.status(403).json({
           error: 'Access Forbidden',
-          message: 'Only recruiters and admins can perform bulk updates'
+          message: 'Only recruiters, TPOs, and admins can perform bulk updates'
         });
       }
 
       const whereClause = { id: { [Op.in]: applicationIds } };
 
-      // For recruiters, ensure they only update applications from their organization
+      // For recruiters, ensure they only update applications from their organization's jobs
       if (req.user.role === 'recruiter') {
         const jobs = await Job.findAll({
           where: { organizationId: req.user.organizationId },
@@ -536,6 +538,19 @@ class ApplicationController {
         });
         const jobIds = jobs.map(job => job.id);
         whereClause.jobId = { [Op.in]: jobIds };
+      }
+
+      // For TPOs, ensure they only update applications from students in their university
+      if (req.user.role === 'tpo') {
+        const students = await User.findAll({
+          where: { 
+            organizationId: req.user.organizationId,
+            role: 'student'
+          },
+          attributes: ['id']
+        });
+        const studentIds = students.map(student => student.id);
+        whereClause.studentId = { [Op.in]: studentIds };
       }
 
       const updateData = { status, feedback };

@@ -54,8 +54,9 @@ class EventController {
 
       if (eventType) whereClause.eventType = eventType;
       if (status) whereClause.status = status;
-      if (organizationId) whereClause.organizationId = organizationId;
-      if (upcoming === 'true') {
+      
+      // Handle upcoming filter
+      if (upcoming === 'true' || upcoming === true) {
         whereClause.startTime = { [Op.gte]: new Date() };
       }
 
@@ -65,10 +66,15 @@ class EventController {
         // This will show events from their university and company events
       } else if (req.user && req.user.role === 'recruiter') {
         // Recruiters only see events from their organization
-        whereClause.organizationId = req.user.organizationId;
+        // Use query param if provided, otherwise use user's organizationId
+        whereClause.organizationId = organizationId || req.user.organizationId;
       } else if (req.user && req.user.role === 'tpo') {
         // TPOs see events from their university
-        whereClause.organizationId = req.user.organizationId;
+        // Use query param if provided, otherwise use user's organizationId
+        whereClause.organizationId = organizationId || req.user.organizationId;
+      } else if (organizationId) {
+        // For unauthenticated or other roles, use query param if provided
+        whereClause.organizationId = organizationId;
       }
 
       const { count, rows: events } = await Event.findAndCountAll({

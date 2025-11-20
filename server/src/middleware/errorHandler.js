@@ -20,6 +20,14 @@ const errorHandler = (err, req, res, next) => {
     const constraintName = err.parent?.constraint || err.fields?.join(', ') || 'unknown';
     const field = err.errors?.[0]?.path || constraintName;
     
+    // Handle primary key constraint errors (sequence issues)
+    if (constraintName === 'organizations_pkey' || constraintName.includes('_pkey')) {
+      return res.status(500).json({
+        error: 'Database Error',
+        message: 'A database error occurred. Please try again or contact support if the problem persists.'
+      });
+    }
+    
     console.error('Unique constraint error details:', {
       constraint: constraintName,
       fields: err.fields,
@@ -36,9 +44,17 @@ const errorHandler = (err, req, res, next) => {
       message: `A record with this ${field} already exists`
     }];
     
+    // Provide user-friendly messages based on the field
+    let userMessage = `A record with this ${field} already exists`;
+    if (field === 'domain') {
+      userMessage = `An organization with this domain is already registered. Please use a different domain.`;
+    } else if (field === 'name') {
+      userMessage = `An organization with this name is already registered. Please use a different name.`;
+    }
+    
     return res.status(409).json({
       error: 'Duplicate Entry',
-      message: `A record with this ${field} already exists`,
+      message: userMessage,
       details: details
     });
   }

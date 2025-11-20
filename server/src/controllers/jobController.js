@@ -106,7 +106,7 @@ class JobController {
       const {
         page = 1,
         limit = 10,
-        status = 'active',
+        status,
         jobType,
         location,
         organizationId,
@@ -119,7 +119,8 @@ class JobController {
       const offset = (page - 1) * limit;
       const whereClause = {};
 
-      // Filters
+      // Filters - only apply status filter if explicitly provided
+      // For recruiters viewing their own jobs, show all statuses by default
       if (status) whereClause.status = status;
       if (jobType) whereClause.jobType = jobType;
       if (location) whereClause.location = { [Op.iLike]: `%${location}%` };

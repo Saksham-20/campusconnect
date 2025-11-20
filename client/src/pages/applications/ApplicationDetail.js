@@ -235,8 +235,17 @@ const ApplicationDetail = () => {
   };
 
   const canUpdateStatus = () => {
-    return user && ['recruiter', 'admin', 'tpo'].includes(user.role) && 
-           application?.job?.organizationId === user.organizationId;
+    if (!user || !application) return false;
+    
+    if (user.role === 'admin') return true;
+    if (user.role === 'recruiter') {
+      return application?.job?.organizationId === user.organizationId;
+    }
+    if (user.role === 'tpo') {
+      // TPOs can update applications for students from their university
+      return application?.student?.organizationId === user.organizationId;
+    }
+    return false;
   };
 
   const StudentProfileSection = ({ student, studentProfile }) => (

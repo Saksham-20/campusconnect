@@ -3,6 +3,7 @@ const express = require('express');
 const { Organization } = require('../models');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 
@@ -171,6 +172,141 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/organizations/register:
+ *   post:
+ *     summary: Register new organization (Public - requires approval)
+ *     tags: [Organizations]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - type
+ *               - domain
+ *               - contactEmail
+ *             properties:
+ *               name:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [university, company]
+ *               domain:
+ *                 type: string
+ *               contactEmail:
+ *                 type: string
+ *                 format: email
+ *               contactPhone:
+ *                 type: string
+ *               website:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Organization registered successfully (pending approval)
+ *       400:
+ *         description: Validation error
+ */
+router.post('/register', async (req, res, next) => {
+  try {
+    const {
+      name,
+      type,
+      domain,
+      contactEmail,
+      contactPhone,
+      website,
+      address
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !type || !domain || !contactEmail) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'Name, type, domain, and contact email are required'
+      });
+    }
+
+    // Validate type
+    if (!['university', 'company'].includes(type)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'Type must be either "university" or "company"'
+      });
+    }
+
+    // Check if organization with same domain already exists
+    const existingOrgByDomain = await Organization.findOne({ where: { domain } });
+    if (existingOrgByDomain) {
+      return res.status(409).json({
+        error: 'Organization Already Exists',
+        message: `An organization with the domain "${domain}" is already registered. Please use a different domain or contact support if this is your organization.`
+      });
+    }
+
+    // Check if organization with same name already exists (case-insensitive)
+    const existingOrgByName = await Organization.findOne({
+      where: {
+        name: { [Op.iLike]: name }
+      }
+    });
+    if (existingOrgByName) {
+      return res.status(409).json({
+        error: 'Organization Already Exists',
+        message: `An organization with the name "${existingOrgByName.name}" is already registered. Please use a different name or contact support if this is your organization.`
+      });
+    }
+
+    // Fix sequence if needed before creating (handles out-of-sync sequences from seeders)
+    // This is a safety measure - the migration should fix it permanently
+    try {
+      const { sequelize } = require('../models');
+      await sequelize.query(`
+        SELECT setval(
+          pg_get_serial_sequence('organizations', 'id'),
+          COALESCE((SELECT MAX(id) FROM organizations), 0) + 1,
+          false
+        );
+      `);
+    } catch (seqError) {
+      // Log but don't fail - sequence might be fine or will be fixed by migration
+      console.warn('Warning: Could not auto-fix organizations sequence:', seqError.message);
+      console.warn('Please run migration 25-fix-organizations-sequence.js to fix this permanently');
+    }
+
+    // Create organization with pending approval
+    const organization = await Organization.create({
+      name,
+      type,
+      domain,
+      contactEmail,
+      contactPhone,
+      website,
+      address,
+      isVerified: false,
+      approvalStatus: 'pending' // Requires admin approval
+    });
+
+    res.status(201).json({
+      message: 'Organization registered successfully. It is pending admin approval.',
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        type: organization.type,
+        domain: organization.domain,
+        approvalStatus: organization.approvalStatus
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
  * /api/organizations:
  *   post:
  *     summary: Create new organization (Admin only)
@@ -252,7 +388,8 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res, next)
       contactPhone,
       website,
       address,
-      isVerified: false // New organizations need verification
+      isVerified: false, // New organizations need verification
+      approvalStatus: 'pending' // All new organizations require admin approval
     });
 
     res.status(201).json({

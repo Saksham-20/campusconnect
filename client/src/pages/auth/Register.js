@@ -15,8 +15,15 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     phone: '',
-    role: 'student',
-    organizationId: ''
+    role: '',
+    organizationId: '',
+    // Organization creation fields
+    organizationName: '',
+    organizationDomain: '',
+    organizationContactEmail: '',
+    organizationContactPhone: '',
+    organizationWebsite: '',
+    organizationAddress: ''
   });
   const [organizations, setOrganizations] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
@@ -33,8 +40,13 @@ const Register = () => {
 
   const fetchOrganizations = async () => {
     try {
-      const response = await api.get('/organizations');
-      setOrganizations(response.organizations || []);
+      // Only fetch approved organizations for registration
+      const response = await api.get('/organizations?verified=true');
+      // Filter to only show approved organizations
+      const approvedOrgs = (response.organizations || []).filter(org => 
+        org.approvalStatus === 'approved' || org.approvalStatus === undefined
+      );
+      setOrganizations(approvedOrgs);
     } catch (error) {
       console.error('Failed to fetch organizations:', error);
     }
@@ -90,12 +102,33 @@ const Register = () => {
       newErrors.phone = 'Please enter a valid phone number';
     }
 
-    if (!formData.role) {
+    if (!formData.role || formData.role === '') {
       newErrors.role = 'Please select a role';
     }
 
-    if (formData.role !== 'admin' && !formData.organizationId) {
-      newErrors.organizationId = 'Please select an organization';
+    // Validate organization selection or creation
+    if (formData.role && formData.role !== 'admin') {
+      if (formData.role === 'new_university' || formData.role === 'new_company') {
+        // Validate organization creation fields
+        if (!formData.organizationName?.trim()) {
+          newErrors.organizationName = `${formData.role === 'new_university' ? 'University' : 'Company'} name is required`;
+        }
+        if (!formData.organizationDomain) {
+          newErrors.organizationDomain = 'Domain email is required';
+        } else if (!/\S+@\S+\.\S+/.test(formData.organizationDomain)) {
+          newErrors.organizationDomain = 'Please enter a valid domain email';
+        }
+        if (!formData.organizationContactEmail) {
+          newErrors.organizationContactEmail = 'Contact email is required';
+        } else if (!/\S+@\S+\.\S+/.test(formData.organizationContactEmail)) {
+          newErrors.organizationContactEmail = 'Please enter a valid contact email';
+        }
+        if (formData.organizationWebsite && !/^https?:\/\/.+/.test(formData.organizationWebsite)) {
+          newErrors.organizationWebsite = 'Please enter a valid website URL (starting with http:// or https://)';
+        }
+      } else if (!formData.organizationId) {
+        newErrors.organizationId = 'Please select an organization';
+      }
     }
 
     setErrors(newErrors);
@@ -111,28 +144,74 @@ const Register = () => {
 
     setIsLoading(true);
     try {
-      const submitData = { ...formData };
+      let submitData = { ...formData };
       delete submitData.confirmPassword;
       
-      // Don't send organizationId for admin role
-      if (formData.role === 'admin') {
-        delete submitData.organizationId;
+      // Handle new organization registration
+      if (formData.role === 'new_university' || formData.role === 'new_company') {
+        try {
+          // First, create the organization
+          const orgData = {
+            name: formData.organizationName,
+            type: formData.role === 'new_university' ? 'university' : 'company',
+            domain: formData.organizationDomain,
+            contactEmail: formData.organizationContactEmail,
+            contactPhone: formData.organizationContactPhone || null,
+            website: formData.organizationWebsite || null,
+            address: formData.organizationAddress || null
+          };
+
+          const orgResponse = await api.post('/organizations/register', orgData);
+          const newOrg = orgResponse.organization;
+          
+          // Set the role and organizationId for user registration
+          submitData.role = formData.role === 'new_university' ? 'tpo' : 'recruiter';
+          submitData.organizationId = newOrg.id;
+          
+          // Clean up organization fields
+          delete submitData.organizationName;
+          delete submitData.organizationDomain;
+          delete submitData.organizationContactEmail;
+          delete submitData.organizationContactPhone;
+          delete submitData.organizationWebsite;
+          delete submitData.organizationAddress;
+          
+          toast.success(`${formData.role === 'new_university' ? 'University' : 'Company'} created successfully. Your account is being created...`);
+        } catch (orgError) {
+          throw new Error(orgError.message || `Failed to create ${formData.role === 'new_university' ? 'university' : 'company'}`);
+        }
+      } else {
+        // Don't send organizationId for admin role
+        if (formData.role === 'admin') {
+          delete submitData.organizationId;
+        }
       }
 
       const response = await register(submitData);
       
       // Check if user needs approval
       if (response.user.approvalStatus === 'pending') {
-        // Redirect to pending approval page for recruiters
-        if (response.user.role === 'recruiter') {
+        // Show appropriate message based on registration type
+        if (formData.role === 'new_university' || formData.role === 'new_company') {
+          toast.success(
+            `Registration successful! Your ${formData.role === 'new_university' ? 'university' : 'company'} and account are pending admin approval. You will be notified once approved.`,
+            { duration: 6000 }
+          );
+        } else if (response.user.role === 'recruiter') {
           navigate('/pending-approval', { replace: true });
+          return;
         } else {
-          // For other roles, show success message and redirect to dashboard
-          toast.success('Registration successful! Redirecting to dashboard...');
-          navigate('/', { replace: true });
+          toast.success('Registration successful! Your account is pending approval. Redirecting...');
         }
+        navigate('/', { replace: true });
       } else {
         // User is auto-approved, redirect to dashboard
+        if (formData.role === 'new_university' || formData.role === 'new_company') {
+          toast.success(
+            `Registration successful! Your ${formData.role === 'new_university' ? 'university' : 'company'} has been created.`,
+            { duration: 5000 }
+          );
+        }
         navigate('/', { replace: true });
       }
     } catch (error) {
@@ -289,20 +368,28 @@ const Register = () => {
                   errors.role ? 'border-red-300' : 'border-gray-300'
                 } bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
               >
+                <option value="">Select a role</option>
                 <option value="student">Student</option>
+                <option value="tpo">Training & Placement Officer (TPO)</option>
                 <option value="recruiter">Recruiter</option>
-                <option value="tpo">Training & Placement Officer</option>
+                <optgroup label="Register New Organization">
+                  <option value="new_university">Register as New University</option>
+                  <option value="new_company">Register as New Company</option>
+                </optgroup>
               </select>
               {errors.role && (
                 <p className="mt-1 text-sm text-red-600">{errors.role}</p>
               )}
             </div>
 
-            {/* Organization */}
-            {formData.role !== 'admin' && (
+            {/* Organization Selection (for existing organizations) */}
+            {formData.role && 
+             formData.role !== 'admin' && 
+             formData.role !== 'new_university' && 
+             formData.role !== 'new_company' && (
               <div>
                 <label htmlFor="organizationId" className="block text-sm font-medium text-gray-700">
-                  Organization
+                  {formData.role === 'student' || formData.role === 'tpo' ? 'University' : 'Company'}
                 </label>
                 <select
                   id="organizationId"
@@ -313,16 +400,164 @@ const Register = () => {
                     errors.organizationId ? 'border-red-300' : 'border-gray-300'
                   } bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                 >
-                  <option value="">Select an organization</option>
-                  {getFilteredOrganizations().map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.name}
+                  <option value="">Select an {formData.role === 'student' || formData.role === 'tpo' ? 'university' : 'company'}</option>
+                  {getFilteredOrganizations().length > 0 ? (
+                    getFilteredOrganizations().map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>
+                      No {formData.role === 'student' || formData.role === 'tpo' ? 'universities' : 'companies'} available
                     </option>
-                  ))}
+                  )}
                 </select>
                 {errors.organizationId && (
                   <p className="mt-1 text-sm text-red-600">{errors.organizationId}</p>
                 )}
+                {getFilteredOrganizations().length === 0 && formData.role && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    No approved {formData.role === 'student' || formData.role === 'tpo' ? 'universities' : 'companies'} are available. Please contact an administrator.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Organization Creation Fields (for new organizations) */}
+            {(formData.role === 'new_university' || formData.role === 'new_company') && (
+              <div className="space-y-4 border-t pt-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> Your {formData.role === 'new_university' ? 'university' : 'company'} will be created with <strong>pending</strong> approval status. An admin will review and approve it before it becomes active.
+                  </p>
+                </div>
+                
+                <div>
+                  <label htmlFor="organizationName" className="block text-sm font-medium text-gray-700">
+                    {formData.role === 'new_university' ? 'University' : 'Company'} Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="organizationName"
+                    name="organizationName"
+                    type="text"
+                    value={formData.organizationName}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full px-3 py-2 border ${
+                      errors.organizationName ? 'border-red-300' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    placeholder={`Enter ${formData.role === 'new_university' ? 'university' : 'company'} name`}
+                    required
+                  />
+                  {errors.organizationName && (
+                    <p className="mt-1 text-sm text-red-600">{errors.organizationName}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="organizationDomain" className="block text-sm font-medium text-gray-700">
+                    Domain Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="organizationDomain"
+                    name="organizationDomain"
+                    type="email"
+                    value={formData.organizationDomain}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full px-3 py-2 border ${
+                      errors.organizationDomain ? 'border-red-300' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    placeholder={`example@${formData.role === 'new_university' ? 'university.edu' : 'company.com'}`}
+                    required
+                  />
+                  {errors.organizationDomain && (
+                    <p className="mt-1 text-sm text-red-600">{errors.organizationDomain}</p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    This will be used to verify your {formData.role === 'new_university' ? 'university' : 'company'} domain
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="organizationContactEmail" className="block text-sm font-medium text-gray-700">
+                    Contact Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="organizationContactEmail"
+                    name="organizationContactEmail"
+                    type="email"
+                    value={formData.organizationContactEmail}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full px-3 py-2 border ${
+                      errors.organizationContactEmail ? 'border-red-300' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    placeholder="contact@example.com"
+                    required
+                  />
+                  {errors.organizationContactEmail && (
+                    <p className="mt-1 text-sm text-red-600">{errors.organizationContactEmail}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="organizationContactPhone" className="block text-sm font-medium text-gray-700">
+                    Contact Phone
+                  </label>
+                  <input
+                    id="organizationContactPhone"
+                    name="organizationContactPhone"
+                    type="tel"
+                    value={formData.organizationContactPhone}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full px-3 py-2 border ${
+                      errors.organizationContactPhone ? 'border-red-300' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    placeholder="+1-555-0100"
+                  />
+                  {errors.organizationContactPhone && (
+                    <p className="mt-1 text-sm text-red-600">{errors.organizationContactPhone}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="organizationWebsite" className="block text-sm font-medium text-gray-700">
+                    Website
+                  </label>
+                  <input
+                    id="organizationWebsite"
+                    name="organizationWebsite"
+                    type="url"
+                    value={formData.organizationWebsite}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full px-3 py-2 border ${
+                      errors.organizationWebsite ? 'border-red-300' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    placeholder="https://example.com"
+                  />
+                  {errors.organizationWebsite && (
+                    <p className="mt-1 text-sm text-red-600">{errors.organizationWebsite}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="organizationAddress" className="block text-sm font-medium text-gray-700">
+                    Address
+                  </label>
+                  <textarea
+                    id="organizationAddress"
+                    name="organizationAddress"
+                    value={formData.organizationAddress}
+                    onChange={handleChange}
+                    rows="3"
+                    className={`mt-1 block w-full px-3 py-2 border ${
+                      errors.organizationAddress ? 'border-red-300' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    placeholder="Enter full address"
+                  />
+                  {errors.organizationAddress && (
+                    <p className="mt-1 text-sm text-red-600">{errors.organizationAddress}</p>
+                  )}
+                </div>
               </div>
             )}
 

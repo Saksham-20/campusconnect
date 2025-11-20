@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import statisticsService from '../../services/statistics';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import toast from 'react-hot-toast';
 import {
   UserGroupIcon,
   BriefcaseIcon,
@@ -37,9 +38,14 @@ const TPODashboard = () => {
     try {
       setIsLoading(true);
       const response = await statisticsService.getTPOStats();
-      setDashboardData(response.stats);
+      if (response && response.stats) {
+        setDashboardData(response.stats);
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      toast.error(error?.response?.data?.message || 'Failed to load dashboard data. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -188,32 +194,39 @@ const TPODashboard = () => {
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {dashboardData.students.byPlacementStatus?.map((placementStat) => {
-                  const IconComponent = getStatusIcon(placementStat.placementStatus);
-                  return (
-                    <div key={placementStat.placementStatus} className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <IconComponent className={`h-4 w-4 mr-2 ${getStatusColor(placementStat.placementStatus).split(' ')[0]}`} />
-                        <span className="text-sm font-medium text-gray-700 capitalize">
-                          {placementStat.placementStatus || 'unplaced'}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-lg font-semibold text-gray-900 mr-3">
-                          {placementStat.count}
-                        </span>
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-green-600 h-2 rounded-full" 
-                            style={{ 
-                              width: `${(placementStat.count / dashboardData.students.total) * 100}%` 
-                            }}
-                          ></div>
+                {dashboardData.students.byPlacementStatus && dashboardData.students.byPlacementStatus.length > 0 ? (
+                  dashboardData.students.byPlacementStatus.map((placementStat) => {
+                    const IconComponent = getStatusIcon(placementStat.placementStatus);
+                    const total = dashboardData.students.total || 1;
+                    return (
+                      <div key={placementStat.placementStatus} className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <IconComponent className={`h-4 w-4 mr-2 ${getStatusColor(placementStat.placementStatus).split(' ')[0]}`} />
+                          <span className="text-sm font-medium text-gray-700 capitalize">
+                            {placementStat.placementStatus || 'unplaced'}
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-lg font-semibold text-gray-900 mr-3">
+                            {placementStat.count || 0}
+                          </span>
+                          <div className="w-24 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-green-600 h-2 rounded-full" 
+                              style={{ 
+                                width: `${((placementStat.count || 0) / total) * 100}%` 
+                              }}
+                            ></div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-4 text-sm text-gray-500">
+                    No placement data available
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -228,32 +241,39 @@ const TPODashboard = () => {
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {dashboardData.jobs.byStatus?.map((jobStat) => {
-                  const IconComponent = getStatusIcon(jobStat.status);
-                  return (
-                    <div key={jobStat.status} className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <IconComponent className={`h-4 w-4 mr-2 ${getStatusColor(jobStat.status).split(' ')[0]}`} />
-                        <span className="text-sm font-medium text-gray-700 capitalize">
-                          {jobStat.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-lg font-semibold text-gray-900 mr-3">
-                          {jobStat.count}
-                        </span>
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-purple-600 h-2 rounded-full" 
-                            style={{ 
-                              width: `${(jobStat.count / dashboardData.jobs.total) * 100}%` 
-                            }}
-                          ></div>
+                {dashboardData.jobs.byStatus && dashboardData.jobs.byStatus.length > 0 ? (
+                  dashboardData.jobs.byStatus.map((jobStat) => {
+                    const IconComponent = getStatusIcon(jobStat.status);
+                    const total = dashboardData.jobs.total || 1;
+                    return (
+                      <div key={jobStat.status} className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <IconComponent className={`h-4 w-4 mr-2 ${getStatusColor(jobStat.status).split(' ')[0]}`} />
+                          <span className="text-sm font-medium text-gray-700 capitalize">
+                            {jobStat.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-lg font-semibold text-gray-900 mr-3">
+                            {jobStat.count || 0}
+                          </span>
+                          <div className="w-24 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-purple-600 h-2 rounded-full" 
+                              style={{ 
+                                width: `${((jobStat.count || 0) / total) * 100}%` 
+                              }}
+                            ></div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-4 text-sm text-gray-500">
+                    No job data available
+                  </div>
+                )}
               </div>
             </div>
           </div>

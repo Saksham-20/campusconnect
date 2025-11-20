@@ -1,7 +1,19 @@
 // client/src/pages/dashboard/AdminDashboard.js
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import statisticsService from '../../services/statistics';
+import adminService from '../../services/adminService';
+import api from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import toast from 'react-hot-toast';
+import TabNavigation from '../../components/admin/TabNavigation';
+import StatCard from '../../components/admin/StatCard';
+import ChartCard from '../../components/admin/ChartCard';
+import AdminModal from '../../components/admin/AdminModal';
+import DataTable from '../../components/admin/DataTable';
+import LineChart from '../../components/admin/LineChart';
+import BarChart from '../../components/admin/BarChart';
+import PieChart from '../../components/admin/PieChart';
 import {
   UsersIcon,
   BuildingOfficeIcon,
@@ -11,10 +23,23 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  EyeIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  AcademicCapIcon
 } from '@heroicons/react/24/outline';
+import { preparePieChartData, prepareLineChartData, prepareBarChartData } from '../../utils/chartUtils';
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Overview tab state
   const [stats, setStats] = useState({
     users: {},
     organizations: {},
@@ -23,21 +48,547 @@ const AdminDashboard = () => {
     placements: {},
     recentActivity: []
   });
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Analytics tab state
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('30');
+  const [topPerformers, setTopPerformers] = useState(null);
+
+  // Users tab state
+  const [users, setUsers] = useState([]);
+  const [usersPagination, setUsersPagination] = useState({});
+  const [usersFilters, setUsersFilters] = useState({
+    search: '',
+    role: '',
+    approvalStatus: '',
+    organizationId: '',
+    organizationType: ''
+  });
+  const [organizations, setOrganizations] = useState([]);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userFormData, setUserFormData] = useState({});
+
+  // TPOs tab state
+  const [tpos, setTpos] = useState([]);
+  const [tposPagination, setTposPagination] = useState({});
+  const [showTPOModal, setShowTPOModal] = useState(false);
+  const [selectedTPO, setSelectedTPO] = useState(null);
+  const [tpoFormData, setTpoFormData] = useState({});
+
+  // Universities tab state
+  const [universities, setUniversities] = useState([]);
+  const [universitiesPagination, setUniversitiesPagination] = useState({});
+  const [showUniversityModal, setShowUniversityModal] = useState(false);
+  const [selectedUniversity, setSelectedUniversity] = useState(null);
+  const [universityFormData, setUniversityFormData] = useState({});
+
+  // Companies tab state
+  const [companies, setCompanies] = useState([]);
+  const [companiesPagination, setCompaniesPagination] = useState({});
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [companyFormData, setCompanyFormData] = useState({});
+
+  // Approval info modal state
+  const [showApprovalInfo, setShowApprovalInfo] = useState(false);
+  const [approvalInfoType, setApprovalInfoType] = useState('');
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: ChartBarIcon },
+    { id: 'analytics', label: 'Analytics', icon: ChartBarIcon },
+    { id: 'users', label: 'Users', icon: UsersIcon, badge: stats.users?.total },
+    { id: 'tpos', label: 'TPOs', icon: AcademicCapIcon },
+    { id: 'universities', label: 'Universities', icon: BuildingOfficeIcon },
+    { id: 'companies', label: 'Companies', icon: BriefcaseIcon }
+  ];
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (user?.role === 'admin') {
+      fetchOverviewStats();
+      fetchOrganizations();
+    }
+  }, [user]);
 
-  const fetchStats = async () => {
+  useEffect(() => {
+    if (activeTab === 'users') {
+      fetchUsers();
+    } else if (activeTab === 'tpos') {
+      fetchTPOs();
+    } else if (activeTab === 'universities') {
+      fetchUniversities();
+    } else if (activeTab === 'companies') {
+      fetchCompanies();
+    } else if (activeTab === 'analytics') {
+      fetchAdvancedAnalytics();
+      fetchTopPerformers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, analyticsPeriod]);
+
+  // Handle user filter changes with debounce
+  useEffect(() => {
+    if (activeTab === 'users') {
+      const timeoutId = setTimeout(() => {
+        fetchUsers(1);
+      }, 500);
+      return () => clearTimeout(timeoutId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usersFilters, activeTab]);
+
+  const fetchOverviewStats = async () => {
     try {
       setIsLoading(true);
       const response = await statisticsService.getAdminStats();
       setStats(response.stats);
     } catch (error) {
       console.error('Failed to fetch admin stats:', error);
+      toast.error('Failed to load statistics');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAdvancedAnalytics = async () => {
+    try {
+      setIsLoading(true);
+      const response = await adminService.getAdvancedAnalytics({ period: analyticsPeriod });
+      setAnalytics(response.analytics);
+    } catch (error) {
+      console.error('Failed to fetch advanced analytics:', error);
+      toast.error('Failed to load analytics');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchTopPerformers = async () => {
+    try {
+      const response = await adminService.getTopPerformers(10);
+      setTopPerformers(response.topPerformers);
+    } catch (error) {
+      console.error('Failed to fetch top performers:', error);
+    }
+  };
+
+  const fetchOrganizations = async () => {
+    try {
+      const response = await api.get('/organizations?limit=1000');
+      setOrganizations(response.organizations || []);
+    } catch (error) {
+      console.error('Failed to fetch organizations:', error);
+    }
+  };
+
+  const fetchUsers = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+        ...Object.fromEntries(
+          Object.entries(usersFilters).filter(([_, value]) => value !== '')
+        )
+      });
+      const response = await api.get(`/users?${params}`);
+      // Note: Using existing /users endpoint which allows admin access
+      setUsers(response.users || []);
+      // Map pagination format
+      const pagination = response.pagination || {};
+      setUsersPagination({
+        currentPage: pagination.currentPage || 1,
+        totalPages: pagination.totalPages || 1,
+        totalItems: pagination.totalUsers || 0,
+        hasMore: pagination.hasMore || false,
+        hasPrevious: (pagination.currentPage || 1) > 1,
+        hasNext: pagination.hasMore || false,
+        limit: 20
+      });
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchTPOs = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      const response = await adminService.getAllTPOs({ page, limit: 20 });
+      setTpos(response.tpos || []);
+      const pagination = response.pagination || {};
+      setTposPagination({
+        currentPage: pagination.currentPage || 1,
+        totalPages: pagination.totalPages || 1,
+        totalItems: pagination.totalItems || 0,
+        hasMore: pagination.hasMore || false,
+        hasPrevious: pagination.currentPage > 1,
+        hasNext: pagination.hasMore || false,
+        limit: 20
+      });
+    } catch (error) {
+      console.error('Failed to fetch TPOs:', error);
+      toast.error('Failed to load TPOs');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchUniversities = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      const response = await adminService.getAllUniversities({ page, limit: 20 });
+      setUniversities(response.universities || []);
+      const pagination = response.pagination || {};
+      setUniversitiesPagination({
+        currentPage: pagination.currentPage || 1,
+        totalPages: pagination.totalPages || 1,
+        totalItems: pagination.totalItems || 0,
+        hasMore: pagination.hasMore || false,
+        hasPrevious: pagination.currentPage > 1,
+        hasNext: pagination.hasMore || false,
+        limit: 20
+      });
+    } catch (error) {
+      console.error('Failed to fetch universities:', error);
+      toast.error('Failed to load universities');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchCompanies = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      const response = await adminService.getAllCompanies({ page, limit: 20 });
+      setCompanies(response.companies || []);
+      const pagination = response.pagination || {};
+      setCompaniesPagination({
+        currentPage: pagination.currentPage || 1,
+        totalPages: pagination.totalPages || 1,
+        totalItems: pagination.totalItems || 0,
+        hasMore: pagination.hasMore || false,
+        hasPrevious: pagination.currentPage > 1,
+        hasNext: pagination.hasMore || false,
+        limit: 20
+      });
+    } catch (error) {
+      console.error('Failed to fetch companies:', error);
+      toast.error('Failed to load companies');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // User management handlers
+  const handleCreateUser = () => {
+    setSelectedUser(null);
+    setUserFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      phone: '',
+      role: 'student',
+      organizationId: ''
+    });
+    setShowUserModal(true);
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setUserFormData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone || '',
+      role: user.role,
+      organizationId: user.organizationId || '',
+      isActive: user.isActive,
+      approvalStatus: user.approvalStatus
+    });
+    setShowUserModal(true);
+  };
+
+  const handleSaveUser = async (e) => {
+    e.preventDefault();
+    try {
+      if (selectedUser) {
+        await adminService.updateUser(selectedUser.id, userFormData);
+        toast.success('User updated successfully');
+      } else {
+        await adminService.createUser(userFormData);
+        toast.success('User created successfully');
+      }
+      setShowUserModal(false);
+      fetchUsers();
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to save user');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to deactivate this user?')) return;
+    try {
+      await adminService.deleteUser(userId);
+      toast.success('User deactivated successfully');
+      fetchUsers();
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete user');
+    }
+  };
+
+  // TPO management handlers
+  const handleCreateTPO = () => {
+    setSelectedTPO(null);
+    setTpoFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      phone: '',
+      organizationId: ''
+    });
+    setShowTPOModal(true);
+  };
+
+  const handleEditTPO = (tpo) => {
+    setSelectedTPO(tpo);
+    setTpoFormData({
+      firstName: tpo.firstName,
+      lastName: tpo.lastName,
+      email: tpo.email,
+      phone: tpo.phone || '',
+      organizationId: tpo.organizationId || ''
+    });
+    setShowTPOModal(true);
+  };
+
+  const handleSaveTPO = async (e) => {
+    e.preventDefault();
+    try {
+      if (selectedTPO) {
+        await adminService.updateTPO(selectedTPO.id, tpoFormData);
+        toast.success('TPO updated successfully');
+      } else {
+        await adminService.createTPO(tpoFormData);
+        toast.success('TPO created successfully');
+      }
+      setShowTPOModal(false);
+      fetchTPOs();
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to save TPO');
+    }
+  };
+
+  const handleDeleteTPO = async (tpoId) => {
+    if (!window.confirm('Are you sure you want to delete this TPO?')) return;
+    try {
+      await adminService.deleteTPO(tpoId);
+      toast.success('TPO deleted successfully');
+      fetchTPOs();
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete TPO');
+    }
+  };
+
+  // University management handlers
+  const handleCreateUniversity = () => {
+    setSelectedUniversity(null);
+    setUniversityFormData({
+      name: '',
+      domain: '',
+      contactEmail: '',
+      contactPhone: '',
+      website: '',
+      address: ''
+    });
+    setApprovalInfoType('university');
+    setShowApprovalInfo(true);
+    // Show modal after user acknowledges approval info
+  };
+
+  const handleApprovalInfoConfirm = () => {
+    setShowApprovalInfo(false);
+    if (approvalInfoType === 'university') {
+      setShowUniversityModal(true);
+    } else if (approvalInfoType === 'company') {
+      setShowCompanyModal(true);
+    }
+  };
+
+  const handleEditUniversity = (university) => {
+    setSelectedUniversity(university);
+    setUniversityFormData({
+      name: university.name,
+      domain: university.domain,
+      contactEmail: university.contactEmail,
+      contactPhone: university.contactPhone || '',
+      website: university.website || '',
+      address: university.address || ''
+    });
+    setShowUniversityModal(true);
+  };
+
+  const handleSaveUniversity = async (e) => {
+    e.preventDefault();
+    try {
+      if (selectedUniversity) {
+        await adminService.updateOrganization(selectedUniversity.id, {
+          ...universityFormData,
+          type: 'university'
+        });
+        toast.success('University updated successfully');
+      } else {
+        await adminService.createOrganization({
+          ...universityFormData,
+          type: 'university'
+        });
+        toast.success('University created successfully');
+      }
+      setShowUniversityModal(false);
+      fetchUniversities();
+      fetchOrganizations();
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to save university');
+    }
+  };
+
+  const handleDeleteUniversity = async (universityId) => {
+    if (!window.confirm('Are you sure you want to delete this university?')) return;
+    try {
+      await adminService.deleteOrganization(universityId);
+      toast.success('University deleted successfully');
+      fetchUniversities();
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete university');
+    }
+  };
+
+  const handleVerifyUniversity = async (universityId, isVerified) => {
+    try {
+      await adminService.verifyOrganization(universityId, isVerified);
+      toast.success(`University ${isVerified ? 'verified' : 'unverified'} successfully`);
+      fetchUniversities();
+    } catch (error) {
+      toast.error(error.message || 'Failed to update verification');
+    }
+  };
+
+  // Company management handlers
+  const handleCreateCompany = () => {
+    setSelectedCompany(null);
+    setCompanyFormData({
+      name: '',
+      domain: '',
+      contactEmail: '',
+      contactPhone: '',
+      website: '',
+      address: ''
+    });
+    setApprovalInfoType('company');
+    setShowApprovalInfo(true);
+    // Show modal after user acknowledges approval info
+  };
+
+  const handleEditCompany = (company) => {
+    setSelectedCompany(company);
+    setCompanyFormData({
+      name: company.name,
+      domain: company.domain,
+      contactEmail: company.contactEmail,
+      contactPhone: company.contactPhone || '',
+      website: company.website || '',
+      address: company.address || ''
+    });
+    setShowCompanyModal(true);
+  };
+
+  const handleSaveCompany = async (e) => {
+    e.preventDefault();
+    try {
+      if (selectedCompany) {
+        await adminService.updateOrganization(selectedCompany.id, {
+          ...companyFormData,
+          type: 'company'
+        });
+        toast.success('Company updated successfully');
+      } else {
+        await adminService.createOrganization({
+          ...companyFormData,
+          type: 'company'
+        });
+        toast.success('Company created successfully');
+      }
+      setShowCompanyModal(false);
+      fetchCompanies();
+      fetchOrganizations();
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to save company');
+    }
+  };
+
+  const handleDeleteCompany = async (companyId) => {
+    if (!window.confirm('Are you sure you want to delete this company?')) return;
+    try {
+      await adminService.deleteOrganization(companyId);
+      toast.success('Company deleted successfully');
+      fetchCompanies();
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete company');
+    }
+  };
+
+  const handleVerifyCompany = async (companyId, isVerified) => {
+    try {
+      await adminService.verifyOrganization(companyId, isVerified);
+      toast.success(`Company ${isVerified ? 'verified' : 'unverified'} successfully`);
+      fetchCompanies();
+    } catch (error) {
+      toast.error(error.message || 'Failed to update verification');
+    }
+  };
+
+  const handleApproveOrganization = async (organizationId, type) => {
+    try {
+      await adminService.verifyOrganization(organizationId, true);
+      toast.success(`${type === 'university' ? 'University' : 'Company'} approved successfully`);
+      if (type === 'university') {
+        fetchUniversities();
+      } else {
+        fetchCompanies();
+      }
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to approve organization');
+    }
+  };
+
+  const handleRejectOrganization = async (organizationId, type) => {
+    if (!window.confirm(`Are you sure you want to reject this ${type}?`)) return;
+    try {
+      await adminService.updateOrganization(organizationId, {
+        approvalStatus: 'rejected'
+      });
+      toast.success(`${type === 'university' ? 'University' : 'Company'} rejected successfully`);
+      if (type === 'university') {
+        fetchUniversities();
+      } else {
+        fetchCompanies();
+      }
+      fetchOverviewStats();
+    } catch (error) {
+      toast.error(error.message || 'Failed to reject organization');
     }
   };
 
@@ -53,19 +604,18 @@ const AdminDashboard = () => {
     return colors[status] || 'text-gray-600 bg-gray-100';
   };
 
-  const getStatusIcon = (status) => {
-    const icons = {
-      active: CheckCircleIcon,
-      closed: XCircleIcon,
-      draft: ExclamationTriangleIcon,
-      pending: ClockIcon,
-      approved: CheckCircleIcon,
-      rejected: XCircleIcon
-    };
-    return icons[status] || ClockIcon;
-  };
+  if (user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
+          <p className="text-gray-600 mt-2">You don't have permission to access this page.</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (isLoading) {
+  if (isLoading && activeTab === 'overview') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="large" />
@@ -73,270 +623,1102 @@ const AdminDashboard = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Admin Dashboard
-          </h1>
-          <p className="text-gray-600 mt-2">
-            System overview and comprehensive analytics
-          </p>
-        </div>
+  // Render Overview Tab
+  const renderOverviewTab = () => (
+    <>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <StatCard
+          title="Total Users"
+          value={stats.users?.total || 0}
+          subtitle={`+${stats.users?.recentRegistrations || 0} this month`}
+          icon={UsersIcon}
+          color="blue"
+        />
+        <StatCard
+          title="Organizations"
+          value={stats.organizations?.total || 0}
+          subtitle="Universities & Companies"
+          icon={BuildingOfficeIcon}
+          color="green"
+        />
+        <StatCard
+          title="Total Jobs"
+          value={stats.jobs?.total || 0}
+          subtitle={`+${stats.jobs?.recentPostings || 0} this week`}
+          icon={BriefcaseIcon}
+          color="purple"
+        />
+        <StatCard
+          title="Applications"
+          value={stats.applications?.total || 0}
+          subtitle="Total submissions"
+          icon={DocumentTextIcon}
+          color="orange"
+        />
+      </div>
 
-        {/* Main Stats Grid */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <UsersIcon className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{stats.users.total || 0}</dd>
-                    <dd className="text-sm text-gray-500">
-                      +{stats.users.recentRegistrations || 0} this month
-                    </dd>
-                  </dl>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <ChartCard title="User Distribution">
+          <div className="space-y-4">
+            {stats.users?.byRole?.map((roleStat) => (
+              <div key={roleStat.role} className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 capitalize">
+                  {roleStat.role}
+                </span>
+                <div className="flex items-center">
+                  <span className="text-lg font-semibold text-gray-900 mr-3">
+                    {roleStat.count}
+                  </span>
+                  <div className="w-24 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
+                      style={{
+                        width: `${(roleStat.count / stats.users.total) * 100}%`
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
+        </ChartCard>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <BuildingOfficeIcon className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Organizations</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{stats.organizations.total || 0}</dd>
-                    <dd className="text-sm text-gray-500">
-                      Universities & Companies
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <BriefcaseIcon className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Jobs</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{stats.jobs.total || 0}</dd>
-                    <dd className="text-sm text-gray-500">
-                      +{stats.jobs.recentPostings || 0} this week
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <DocumentTextIcon className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Applications</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{stats.applications.total || 0}</dd>
-                    <dd className="text-sm text-gray-500">
-                      Total submissions
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed Statistics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* User Statistics */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                <UsersIcon className="h-5 w-5 text-blue-600 mr-2" />
-                User Distribution
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {stats.users.byRole?.map((roleStat) => (
-                  <div key={roleStat.role} className="flex items-center justify-between">
+        <ChartCard title="Job Status Distribution">
+          <div className="space-y-4">
+            {stats.jobs?.byStatus?.map((jobStat) => {
+              const IconComponent = jobStat.status === 'active' ? CheckCircleIcon : 
+                                   jobStat.status === 'closed' ? XCircleIcon : ExclamationTriangleIcon;
+              return (
+                <div key={jobStat.status} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <IconComponent className={`h-4 w-4 mr-2 ${getStatusColor(jobStat.status).split(' ')[0]}`} />
                     <span className="text-sm font-medium text-gray-700 capitalize">
-                      {roleStat.role}
+                      {jobStat.status}
                     </span>
-                    <div className="flex items-center">
-                      <span className="text-lg font-semibold text-gray-900 mr-3">
-                        {roleStat.count}
-                      </span>
-                      <div className="w-24 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ 
-                            width: `${(roleStat.count / stats.users.total) * 100}%` 
-                          }}
-                        ></div>
-                      </div>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-lg font-semibold text-gray-900 mr-3">
+                      {jobStat.count}
+                    </span>
+                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-purple-600 h-2 rounded-full"
+                        style={{
+                          width: `${(jobStat.count / stats.jobs.total) * 100}%`
+                        }}
+                      ></div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              );
+            })}
           </div>
+        </ChartCard>
+      </div>
 
-          {/* Job Statistics */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                <BriefcaseIcon className="h-5 w-5 text-purple-600 mr-2" />
-                Job Status Distribution
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {stats.jobs.byStatus?.map((jobStat) => {
-                  const IconComponent = getStatusIcon(jobStat.status);
-                  return (
-                    <div key={jobStat.status} className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <IconComponent className={`h-4 w-4 mr-2 ${getStatusColor(jobStat.status).split(' ')[0]}`} />
-                        <span className="text-sm font-medium text-gray-700 capitalize">
-                          {jobStat.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-lg font-semibold text-gray-900 mr-3">
-                          {jobStat.count}
-                        </span>
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-purple-600 h-2 rounded-full" 
-                            style={{ 
-                              width: `${(jobStat.count / stats.jobs.total) * 100}%` 
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+      <ChartCard title="Recent Activity (Last 7 Days)">
+        {stats.recentActivity?.length > 0 ? (
+          <div className="space-y-4">
+            {stats.recentActivity.map((activity, index) => (
+              <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {activity.student?.firstName} {activity.student?.lastName}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Applied to {activity.job?.title} at {activity.job?.organization?.name}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">
+                    {new Date(activity.createdAt).toLocaleDateString()}
+                  </p>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
+                    {activity.status}
+                  </span>
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No recent activity</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Applications and activities will appear here.
+            </p>
+          </div>
+        )}
+      </ChartCard>
+    </>
+  );
+
+  // Render Analytics Tab
+  const renderAnalyticsTab = () => {
+    if (isLoading || !analytics) {
+      return <LoadingSpinner size="large" />;
+    }
+
+    return (
+      <>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <label className="text-sm font-medium text-gray-700">Period:</label>
+            <select
+              value={analyticsPeriod}
+              onChange={(e) => {
+                setAnalyticsPeriod(e.target.value);
+              }}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last year</option>
+            </select>
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <ChartBarIcon className="h-5 w-5 text-green-600 mr-2" />
-              Recent Activity (Last 7 Days)
-            </h2>
-          </div>
-          <div className="p-6">
-            {stats.recentActivity?.length > 0 ? (
-              <div className="space-y-4">
-                {stats.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <ChartCard title="User Growth Over Time">
+            {analytics.userGrowth && analytics.userGrowth.length > 0 ? (
+              <LineChart
+                data={prepareLineChartData(analytics.userGrowth, 'date', ['total'])}
+                xKey="date"
+                yKeys={[{ key: 'total', name: 'New Users', color: '#3B82F6' }]}
+              />
+            ) : (
+              <p className="text-center text-gray-500 py-8">No data available</p>
+            )}
+          </ChartCard>
+
+          <ChartCard title="Job Posting Trends">
+            {analytics.jobTrends?.daily && analytics.jobTrends.daily.length > 0 ? (
+              <LineChart
+                data={prepareLineChartData(analytics.jobTrends.daily, 'date', ['total'])}
+                xKey="date"
+                yKeys={[{ key: 'total', name: 'Jobs Posted', color: '#8B5CF6' }]}
+              />
+            ) : (
+              <p className="text-center text-gray-500 py-8">No data available</p>
+            )}
+          </ChartCard>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <ChartCard title="Application Funnel">
+            {analytics.applicationTrends?.funnel ? (
+              <BarChart
+                data={Object.entries(analytics.applicationTrends.funnel).map(([key, value]) => ({
+                  name: key,
+                  value
+                }))}
+                xKey="name"
+                yKeys={[{ key: 'value', name: 'Applications', color: '#10B981' }]}
+              />
+            ) : (
+              <p className="text-center text-gray-500 py-8">No data available</p>
+            )}
+          </ChartCard>
+
+          <ChartCard title="Placement Rate Trends">
+            {analytics.placementTrends?.daily && analytics.placementTrends.daily.length > 0 ? (
+              <LineChart
+                data={prepareLineChartData(analytics.placementTrends.daily, 'date', ['placed'])}
+                xKey="date"
+                yKeys={[{ key: 'placed', name: 'Placed Students', color: '#10B981' }]}
+              />
+            ) : (
+              <p className="text-center text-gray-500 py-8">No data available</p>
+            )}
+          </ChartCard>
+        </div>
+
+        {topPerformers && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <ChartCard title="Top Universities">
+              {topPerformers.universities && topPerformers.universities.length > 0 ? (
+                <div className="space-y-2">
+                  {topPerformers.universities.slice(0, 5).map((uni, index) => (
+                    <div key={uni.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                      <span className="text-sm font-medium text-gray-700">
+                        {index + 1}. {uni.name}
+                      </span>
+                      <span className="text-sm text-gray-600">{uni.placements} placements</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-8">No data available</p>
+              )}
+            </ChartCard>
+
+            <ChartCard title="Top Companies">
+              {topPerformers.companies && topPerformers.companies.length > 0 ? (
+                <div className="space-y-2">
+                  {topPerformers.companies.slice(0, 5).map((company, index) => (
+                    <div key={company.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                      <span className="text-sm font-medium text-gray-700">
+                        {index + 1}. {company.name}
+                      </span>
+                      <span className="text-sm text-gray-600">{company.jobs} jobs</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-8">No data available</p>
+              )}
+            </ChartCard>
+
+            <ChartCard title="Top Students">
+              {topPerformers.students && topPerformers.students.length > 0 ? (
+                <div className="space-y-2">
+                  {topPerformers.students.slice(0, 5).map((student, index) => (
+                    <div key={student.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {activity.student?.firstName} {activity.student?.lastName}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Applied to {activity.job?.title} at {activity.job?.organization?.name}
-                        </p>
+                        <span className="text-sm font-medium text-gray-700">
+                          {index + 1}. {student.name}
+                        </span>
+                        <p className="text-xs text-gray-500">CGPA: {student.cgpa}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">
-                        {new Date(activity.createdAt).toLocaleDateString()}
-                      </p>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
-                        {activity.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-8">No data available</p>
+              )}
+            </ChartCard>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  // Render Users Tab
+  const renderUsersTab = () => {
+    const userColumns = [
+      { key: 'firstName', label: 'Name', sortable: true, render: (_, row) => `${row.firstName} ${row.lastName}` },
+      { key: 'email', label: 'Email', sortable: true },
+      { key: 'role', label: 'Role', sortable: true, render: (value) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          value === 'admin' ? 'bg-red-100 text-red-800' :
+          value === 'tpo' ? 'bg-blue-100 text-blue-800' :
+          value === 'recruiter' ? 'bg-purple-100 text-purple-800' :
+          'bg-green-100 text-green-800'
+        }`}>
+          {value}
+        </span>
+      )},
+      { key: 'organization', label: 'Organization', render: (_, row) => row.organization?.name || 'N/A' },
+      { key: 'approvalStatus', label: 'Status', render: (value) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
+          {value}
+        </span>
+      )}
+    ];
+
+    return (
+      <>
+        <div className="mb-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 max-w-lg">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={usersFilters.search}
+                  onChange={(e) => {
+                    setUsersFilters(prev => ({ ...prev, search: e.target.value }));
+                  }}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No recent activity</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Applications and activities will appear here.
-                </p>
-              </div>
+            </div>
+            <button
+              onClick={handleCreateUser}
+              className="ml-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Create User
+            </button>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <FunnelIcon className="h-5 w-5 text-gray-400" />
+              <label className="text-sm font-medium text-gray-700">Role:</label>
+              <select
+                value={usersFilters.role}
+                onChange={(e) => {
+                  setUsersFilters(prev => ({ ...prev, role: e.target.value }));
+                }}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Roles</option>
+                <option value="student">Students</option>
+                <option value="tpo">TPOs</option>
+                <option value="recruiter">Recruiters</option>
+                <option value="admin">Admins</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Organization:</label>
+              <select
+                value={usersFilters.organizationType}
+                onChange={(e) => {
+                  setUsersFilters(prev => ({ ...prev, organizationType: e.target.value }));
+                }}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Organizations</option>
+                <option value="university">Universities</option>
+                <option value="company">Companies</option>
+              </select>
+            </div>
+            {(usersFilters.role || usersFilters.organizationType || usersFilters.search) && (
+              <button
+                onClick={() => {
+                  setUsersFilters({
+                    search: '',
+                    role: '',
+                    approvalStatus: '',
+                    organizationId: '',
+                    organizationType: ''
+                  });
+                }}
+                className="text-sm text-gray-600 hover:text-gray-900 underline"
+              >
+                Clear Filters
+              </button>
             )}
           </div>
         </div>
 
-        {/* Management Links */}
-        <div className="bg-white shadow rounded-lg mt-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">System Management</h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <a
-                href="/admin/users"
-                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+        <DataTable
+          columns={userColumns}
+          data={users}
+          actions={(row) => (
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditUser(row);
+                }}
+                className="text-blue-600 hover:text-blue-900"
               >
-                <div className="flex items-center">
-                  <UsersIcon className="h-8 w-8 text-blue-600 mr-3" />
-                  <div>
-                    <h3 className="font-medium">Manage Users</h3>
-                    <p className="text-sm text-gray-600">View and manage all users</p>
-                  </div>
-                </div>
-              </a>
+                <PencilIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteUser(row.id);
+                }}
+                className="text-red-600 hover:text-red-900"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+          pagination={usersPagination}
+          onPageChange={fetchUsers}
+          loading={isLoading}
+        />
 
-              <a
-                href="/admin/organizations"
-                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+        <AdminModal
+          isOpen={showUserModal}
+          onClose={() => setShowUserModal(false)}
+          title={selectedUser ? 'Edit User' : 'Create User'}
+        >
+          <form onSubmit={handleSaveUser} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">First Name</label>
+                <input
+                  type="text"
+                  required
+                  value={userFormData.firstName}
+                  onChange={(e) => setUserFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                <input
+                  type="text"
+                  required
+                  value={userFormData.lastName}
+                  onChange={(e) => setUserFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                required
+                value={userFormData.email}
+                onChange={(e) => setUserFormData(prev => ({ ...prev, email: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            {!selectedUser && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <input
+                  type="password"
+                  required
+                  value={userFormData.password}
+                  onChange={(e) => setUserFormData(prev => ({ ...prev, password: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Role</label>
+              <select
+                required
+                value={userFormData.role}
+                onChange={(e) => setUserFormData(prev => ({ ...prev, role: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               >
-                <div className="flex items-center">
-                  <BuildingOfficeIcon className="h-8 w-8 text-green-600 mr-3" />
-                  <div>
-                    <h3 className="font-medium">Organizations</h3>
-                    <p className="text-sm text-gray-600">Manage universities and companies</p>
-                  </div>
-                </div>
-              </a>
+                <option value="student">Student</option>
+                <option value="recruiter">Recruiter</option>
+                <option value="tpo">TPO</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            {userFormData.role !== 'admin' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Organization</label>
+                <select
+                  required
+                  value={userFormData.organizationId}
+                  onChange={(e) => setUserFormData(prev => ({ ...prev, organizationId: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Select organization</option>
+                  {organizations
+                    .filter(org => {
+                      if (userFormData.role === 'student' || userFormData.role === 'tpo') {
+                        return org.type === 'university';
+                      } else if (userFormData.role === 'recruiter') {
+                        return org.type === 'company';
+                      }
+                      return true;
+                    })
+                    .map(org => (
+                      <option key={org.id} value={org.id}>{org.name}</option>
+                    ))}
+                </select>
+              </div>
+            )}
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowUserModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                {selectedUser ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </form>
+        </AdminModal>
+      </>
+    );
+  };
 
-              <a
-                href="/admin/jobs"
-                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+  // Render TPOs Tab
+  const renderTPOsTab = () => {
+    const tpoColumns = [
+      { key: 'firstName', label: 'Name', sortable: true, render: (_, row) => `${row.firstName} ${row.lastName}` },
+      { key: 'email', label: 'Email', sortable: true },
+      { key: 'organization', label: 'University', render: (_, row) => row.organization?.name || 'N/A' },
+      { key: 'isActive', label: 'Status', render: (value) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {value ? 'Active' : 'Inactive'}
+        </span>
+      )}
+    ];
+
+    return (
+      <>
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-900">Training & Placement Officers</h3>
+          <button
+            onClick={handleCreateTPO}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Create TPO
+          </button>
+        </div>
+
+        <DataTable
+          columns={tpoColumns}
+          data={tpos}
+          actions={(row) => (
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditTPO(row);
+                }}
+                className="text-blue-600 hover:text-blue-900"
               >
-                <div className="flex items-center">
-                  <BriefcaseIcon className="h-8 w-8 text-purple-600 mr-3" />
-                  <div>
-                    <h3 className="font-medium">Job Postings</h3>
-                    <p className="text-sm text-gray-600">Monitor all job postings</p>
-                  </div>
+                <PencilIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteTPO(row.id);
+                }}
+                className="text-red-600 hover:text-red-900"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+          pagination={tposPagination}
+          onPageChange={fetchTPOs}
+          loading={isLoading}
+        />
+
+        <AdminModal
+          isOpen={showTPOModal}
+          onClose={() => setShowTPOModal(false)}
+          title={selectedTPO ? 'Edit TPO' : 'Create TPO'}
+        >
+          <form onSubmit={handleSaveTPO} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">First Name</label>
+                <input
+                  type="text"
+                  required
+                  value={tpoFormData.firstName}
+                  onChange={(e) => setTpoFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                <input
+                  type="text"
+                  required
+                  value={tpoFormData.lastName}
+                  onChange={(e) => setTpoFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                required
+                value={tpoFormData.email}
+                onChange={(e) => setTpoFormData(prev => ({ ...prev, email: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            {!selectedTPO && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <input
+                  type="password"
+                  required
+                  value={tpoFormData.password}
+                  onChange={(e) => setTpoFormData(prev => ({ ...prev, password: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">University</label>
+              <select
+                required
+                value={tpoFormData.organizationId}
+                onChange={(e) => setTpoFormData(prev => ({ ...prev, organizationId: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="">Select university</option>
+                {organizations
+                  .filter(org => org.type === 'university')
+                  .map(org => (
+                    <option key={org.id} value={org.id}>{org.name}</option>
+                  ))}
+              </select>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowTPOModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                {selectedTPO ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </form>
+        </AdminModal>
+      </>
+    );
+  };
+
+  // Render Universities Tab
+  const renderUniversitiesTab = () => {
+    const universityColumns = [
+      { key: 'name', label: 'Name', sortable: true },
+      { key: 'domain', label: 'Domain', sortable: true },
+      { key: 'stats', label: 'Students', render: (_, row) => row.stats?.students || 0 },
+      { key: 'stats', label: 'TPOs', render: (_, row) => row.stats?.tpos || 0 },
+      { key: 'approvalStatus', label: 'Approval Status', render: (value) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
+          {value || 'pending'}
+        </span>
+      )},
+      { key: 'isVerified', label: 'Verified', render: (value) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          value ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {value ? 'Yes' : 'No'}
+        </span>
+      )}
+    ];
+
+    return (
+      <>
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-900">Universities</h3>
+          <button
+            onClick={handleCreateUniversity}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Create University
+          </button>
+        </div>
+
+        <DataTable
+          columns={universityColumns}
+          data={universities}
+          actions={(row) => (
+            <div className="flex items-center space-x-2">
+              {row.approvalStatus === 'pending' && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApproveOrganization(row.id, 'university');
+                    }}
+                    className="text-sm px-2 py-1 rounded text-green-600 hover:bg-green-50 font-medium"
+                    title="Approve"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRejectOrganization(row.id, 'university');
+                    }}
+                    className="text-sm px-2 py-1 rounded text-red-600 hover:bg-red-50 font-medium"
+                    title="Reject"
+                  >
+                    Reject
+                  </button>
+                </>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleVerifyUniversity(row.id, !row.isVerified);
+                }}
+                className={`text-sm px-2 py-1 rounded ${
+                  row.isVerified ? 'text-yellow-600 hover:bg-yellow-50' : 'text-green-600 hover:bg-green-50'
+                }`}
+              >
+                {row.isVerified ? 'Unverify' : 'Verify'}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditUniversity(row);
+                }}
+                className="text-blue-600 hover:text-blue-900"
+              >
+                <PencilIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteUniversity(row.id);
+                }}
+                className="text-red-600 hover:text-red-900"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+          pagination={universitiesPagination}
+          onPageChange={fetchUniversities}
+          loading={isLoading}
+        />
+
+        <AdminModal
+          isOpen={showUniversityModal}
+          onClose={() => setShowUniversityModal(false)}
+          title={selectedUniversity ? 'Edit University' : 'Create University'}
+        >
+          <form onSubmit={handleSaveUniversity} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Name</label>
+              <input
+                type="text"
+                required
+                value={universityFormData.name}
+                onChange={(e) => setUniversityFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Domain</label>
+              <input
+                type="email"
+                required
+                placeholder="example@university.edu"
+                value={universityFormData.domain}
+                onChange={(e) => setUniversityFormData(prev => ({ ...prev, domain: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Contact Email</label>
+              <input
+                type="email"
+                required
+                value={universityFormData.contactEmail}
+                onChange={(e) => setUniversityFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Contact Phone</label>
+              <input
+                type="text"
+                value={universityFormData.contactPhone}
+                onChange={(e) => setUniversityFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Website</label>
+              <input
+                type="url"
+                value={universityFormData.website}
+                onChange={(e) => setUniversityFormData(prev => ({ ...prev, website: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address</label>
+              <textarea
+                value={universityFormData.address}
+                onChange={(e) => setUniversityFormData(prev => ({ ...prev, address: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                rows="3"
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowUniversityModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                {selectedUniversity ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </form>
+        </AdminModal>
+      </>
+    );
+  };
+
+  // Render Companies Tab
+  const renderCompaniesTab = () => {
+    const companyColumns = [
+      { key: 'name', label: 'Name', sortable: true },
+      { key: 'domain', label: 'Domain', sortable: true },
+      { key: 'stats', label: 'Recruiters', render: (_, row) => row.stats?.recruiters || 0 },
+      { key: 'stats', label: 'Jobs', render: (_, row) => row.stats?.jobs || 0 },
+      { key: 'approvalStatus', label: 'Approval Status', render: (value) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
+          {value || 'pending'}
+        </span>
+      )},
+      { key: 'isVerified', label: 'Verified', render: (value) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          value ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {value ? 'Yes' : 'No'}
+        </span>
+      )}
+    ];
+
+    return (
+      <>
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-900">Companies</h3>
+          <button
+            onClick={handleCreateCompany}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Create Company
+          </button>
+        </div>
+
+        <DataTable
+          columns={companyColumns}
+          data={companies}
+          actions={(row) => (
+            <div className="flex items-center space-x-2">
+              {row.approvalStatus === 'pending' && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApproveOrganization(row.id, 'company');
+                    }}
+                    className="text-sm px-2 py-1 rounded text-green-600 hover:bg-green-50 font-medium"
+                    title="Approve"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRejectOrganization(row.id, 'company');
+                    }}
+                    className="text-sm px-2 py-1 rounded text-red-600 hover:bg-red-50 font-medium"
+                    title="Reject"
+                  >
+                    Reject
+                  </button>
+                </>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleVerifyCompany(row.id, !row.isVerified);
+                }}
+                className={`text-sm px-2 py-1 rounded ${
+                  row.isVerified ? 'text-yellow-600 hover:bg-yellow-50' : 'text-green-600 hover:bg-green-50'
+                }`}
+              >
+                {row.isVerified ? 'Unverify' : 'Verify'}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditCompany(row);
+                }}
+                className="text-blue-600 hover:text-blue-900"
+              >
+                <PencilIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteCompany(row.id);
+                }}
+                className="text-red-600 hover:text-red-900"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+          pagination={companiesPagination}
+          onPageChange={fetchCompanies}
+          loading={isLoading}
+        />
+
+        <AdminModal
+          isOpen={showCompanyModal}
+          onClose={() => setShowCompanyModal(false)}
+          title={selectedCompany ? 'Edit Company' : 'Create Company'}
+        >
+          <form onSubmit={handleSaveCompany} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Name</label>
+              <input
+                type="text"
+                required
+                value={companyFormData.name}
+                onChange={(e) => setCompanyFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Domain</label>
+              <input
+                type="email"
+                required
+                placeholder="example@company.com"
+                value={companyFormData.domain}
+                onChange={(e) => setCompanyFormData(prev => ({ ...prev, domain: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Contact Email</label>
+              <input
+                type="email"
+                required
+                value={companyFormData.contactEmail}
+                onChange={(e) => setCompanyFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Contact Phone</label>
+              <input
+                type="text"
+                value={companyFormData.contactPhone}
+                onChange={(e) => setCompanyFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Website</label>
+              <input
+                type="url"
+                value={companyFormData.website}
+                onChange={(e) => setCompanyFormData(prev => ({ ...prev, website: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address</label>
+              <textarea
+                value={companyFormData.address}
+                onChange={(e) => setCompanyFormData(prev => ({ ...prev, address: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                rows="3"
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowCompanyModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                {selectedCompany ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </form>
+        </AdminModal>
+      </>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">System overview and comprehensive analytics</p>
+        </div>
+
+        <TabNavigation
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+
+        {activeTab === 'overview' && renderOverviewTab()}
+        {activeTab === 'analytics' && renderAnalyticsTab()}
+        {activeTab === 'users' && renderUsersTab()}
+        {activeTab === 'tpos' && renderTPOsTab()}
+        {activeTab === 'universities' && renderUniversitiesTab()}
+        {activeTab === 'companies' && renderCompaniesTab()}
+      </div>
+
+      {/* Approval Info Modal */}
+      <AdminModal
+        isOpen={showApprovalInfo}
+        onClose={() => setShowApprovalInfo(false)}
+        title={`New ${approvalInfoType === 'university' ? 'University' : 'Company'} Approval Required`}
+      >
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <ExclamationTriangleIcon className="h-5 w-5 text-blue-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Admin Approval Required
+                </h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>
+                    All new {approvalInfoType === 'university' ? 'universities' : 'companies'} require admin approval before they can be used in the system.
+                  </p>
+                  <ul className="mt-2 list-disc list-inside space-y-1">
+                    <li>The {approvalInfoType === 'university' ? 'university' : 'company'} will be created with <strong>pending</strong> approval status</li>
+                    <li>An admin must review and approve it before users can register with this organization</li>
+                    <li>You can approve it immediately after creation from the {approvalInfoType === 'university' ? 'Universities' : 'Companies'} tab</li>
+                  </ul>
                 </div>
-              </a>
+              </div>
             </div>
           </div>
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => setShowApprovalInfo(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleApprovalInfoConfirm}
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Continue
+            </button>
+          </div>
         </div>
-      </div>
+      </AdminModal>
     </div>
   );
 };

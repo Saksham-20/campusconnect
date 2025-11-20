@@ -100,4 +100,26 @@ router.get('/tpo', authenticateToken, requireRole('tpo'), statisticsController.g
  */
 router.get('/dashboard', authenticateToken, requireRole('admin', 'tpo'), statisticsController.getDashboardOverview);
 
+/**
+ * @swagger
+ * /api/statistics/analytics/advanced:
+ *   get:
+ *     summary: Get advanced analytics with time-series data
+ *     tags: [Statistics]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/analytics/advanced', authenticateToken, requireRole('admin'), statisticsController.getAdvancedAnalytics);
+
+/**
+ * @swagger
+ * /api/statistics/analytics/top-performers:
+ *   get:
+ *     summary: Get top performers (universities, companies, students)
+ *     tags: [Statistics]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/analytics/top-performers', authenticateToken, requireRole('admin'), statisticsController.getTopPerformers);
+
 module.exports = router;

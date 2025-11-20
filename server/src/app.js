@@ -27,6 +27,7 @@ const organizationsRoutes = require('./routes/organizations');
 const achievementRoutes = require('./routes/achievements');
 const statisticsRoutes = require('./routes/statistics');
 const approvalRoutes = require('./routes/approvals');
+const adminRoutes = require('./routes/admin');
 
 
 const app = express();
@@ -452,6 +453,7 @@ app.use('/api/organizations', organizationsRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/approvals', approvalRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Serve static files from React app in production (only if enabled)
 if (process.env.NODE_ENV === 'production' && process.env.SERVE_CLIENT !== 'false') {

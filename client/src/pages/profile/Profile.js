@@ -1,5 +1,6 @@
 // client/src/pages/profile/Profile.js
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -13,16 +14,19 @@ import {
   BriefcaseIcon,
   TrophyIcon,
   DocumentTextIcon,
+  DocumentArrowDownIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
 const Profile = () => {
+  const { id } = useParams(); // Get user ID from URL params
   const { user, updateUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [achievements, setAchievements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
+  const isViewingOtherUser = id && id !== user?.id; // Check if viewing another user's profile
   const [formData, setFormData] = useState({
     // Personal Info
     firstName: '',
@@ -59,13 +63,15 @@ const Profile = () => {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [id]); // Re-fetch when id changes
 
   const fetchProfile = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/users/profile');
-      const userData = response.user;
+      // If viewing another user's profile, use /users/:id, otherwise use /users/profile
+      const endpoint = id ? `/users/${id}` : '/users/profile';
+      const response = await api.get(endpoint);
+      const userData = response.user || response; // Handle different response formats
       setProfile(userData);
       
       // Populate form data
@@ -317,13 +323,15 @@ const handleAddAchievement = async () => {
                   <p className="text-sm text-gray-500">{profile?.organization?.name}</p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                <PencilIcon className="h-4 w-4 mr-2" />
-                {isEditing ? 'Cancel' : 'Edit Profile'}
-              </button>
+              {!isViewingOtherUser && (
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  <PencilIcon className="h-4 w-4 mr-2" />
+                  {isEditing ? 'Cancel' : 'Edit Profile'}
+                </button>
+              )}
             </div>
           </div>
 
@@ -366,9 +374,10 @@ const handleAddAchievement = async () => {
             <nav className="flex space-x-8 px-6">
               {[
                 { id: 'personal', name: 'Personal Info', icon: UserCircleIcon },
-                ...(user.role === 'student' ? [
+                ...(profile?.role === 'student' ? [
                   { id: 'academic', name: 'Academic Info', icon: AcademicCapIcon },
-                  { id: 'achievements', name: 'Achievements', icon: TrophyIcon }
+                  { id: 'achievements', name: 'Achievements', icon: TrophyIcon },
+                  { id: 'resume', name: 'Resume', icon: DocumentTextIcon }
                 ] : [])
               ].map((tab) => (
                 <button
@@ -388,7 +397,7 @@ const handleAddAchievement = async () => {
           </div>
 
           <div className="p-6">
-            {isEditing ? (
+            {isEditing && !isViewingOtherUser ? (
               <form onSubmit={handleSubmit}>
                 {activeTab === 'personal' && (
                   <div className="space-y-4">
@@ -445,7 +454,7 @@ const handleAddAchievement = async () => {
                       />
                     </div>
 
-                    {user.role === 'student' && (
+                    {profile?.role === 'student' && (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
@@ -552,7 +561,7 @@ const handleAddAchievement = async () => {
                   </div>
                 )}
 
-                {activeTab === 'academic' && user.role === 'student' && (
+                {activeTab === 'academic' && profile?.role === 'student' && (
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
@@ -727,7 +736,7 @@ const handleAddAchievement = async () => {
                             <dt className="text-sm font-medium text-gray-500">Phone</dt>
                             <dd className="text-sm text-gray-900">{profile?.phone || 'Not provided'}</dd>
                           </div>
-                          {user.role === 'student' && profile?.studentProfile && (
+                          {profile?.role === 'student' && profile?.studentProfile && (
                             <>
                               <div>
                                 <dt className="text-sm font-medium text-gray-500">Date of Birth</dt>
@@ -749,7 +758,7 @@ const handleAddAchievement = async () => {
                         </dl>
                       </div>
 
-                      {user.role === 'student' && profile?.studentProfile && (
+                      {profile?.role === 'student' && profile?.studentProfile && (
                         <div>
                           <h3 className="text-lg font-medium text-gray-900 mb-4">Additional Info</h3>
                           <dl className="space-y-3">
@@ -770,7 +779,7 @@ const handleAddAchievement = async () => {
                       )}
                     </div>
 
-                    {user.role === 'student' && profile?.studentProfile && (
+                    {profile?.role === 'student' && profile?.studentProfile && (
                       <div>
                         <h3 className="text-lg font-medium text-gray-900 mb-4">Social Links</h3>
                         <div className="flex flex-wrap gap-4">
@@ -810,7 +819,7 @@ const handleAddAchievement = async () => {
                   </div>
                 )}
 
-                {activeTab === 'academic' && user.role === 'student' && (
+                {activeTab === 'academic' && profile?.role === 'student' && (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
@@ -895,17 +904,19 @@ const handleAddAchievement = async () => {
                   </div>
                 )}
 
-                {activeTab === 'achievements' && user.role === 'student' && (
+                {activeTab === 'achievements' && profile?.role === 'student' && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-medium text-gray-900">Achievements</h3>
-                      <button
-                        onClick={() => setShowAchievementModal(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        <PlusIcon className="h-4 w-4 mr-2" />
-                        Add Achievement
-                      </button>
+                      {!isViewingOtherUser && (
+                        <button
+                          onClick={() => setShowAchievementModal(true)}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                        >
+                          <PlusIcon className="h-4 w-4 mr-2" />
+                          Add Achievement
+                        </button>
+                      )}
                     </div>
 
                     {achievements.length > 0 ? (
@@ -950,12 +961,14 @@ const handleAddAchievement = async () => {
                                   )}
                                 </div>
                               </div>
-                              <button
-                                onClick={() => handleDeleteAchievement(achievement.id)}
-                                className="ml-4 text-red-600 hover:text-red-800"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
+                              {!isViewingOtherUser && (
+                                <button
+                                  onClick={() => handleDeleteAchievement(achievement.id)}
+                                  className="ml-4 text-red-600 hover:text-red-800"
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -969,6 +982,60 @@ const handleAddAchievement = async () => {
                         </p>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {activeTab === 'resume' && profile?.role === 'student' && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Resume</h3>
+                      {profile?.studentProfile?.resumeUrl ? (
+                        <div className="border border-gray-200 rounded-lg p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <DocumentTextIcon className="h-12 w-12 text-blue-600" />
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-900">Resume Available</h4>
+                                <p className="text-sm text-gray-500">
+                                  {profile.studentProfile.resumeUrl.includes('http') 
+                                    ? 'External resume link' 
+                                    : 'Resume file uploaded'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex space-x-3">
+                              <a
+                                href={profile.studentProfile.resumeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                              >
+                                <DocumentTextIcon className="h-4 w-4 mr-2" />
+                                View Resume
+                              </a>
+                              <a
+                                href={profile.studentProfile.resumeUrl}
+                                download
+                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                              >
+                                <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+                                Download
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="border border-gray-200 rounded-lg p-8 text-center">
+                          <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+                          <h3 className="mt-2 text-sm font-medium text-gray-900">No resume uploaded</h3>
+                          <p className="mt-1 text-sm text-gray-500">
+                            {isViewingOtherUser 
+                              ? 'This student has not uploaded a resume yet.'
+                              : 'Upload your resume to make it visible to recruiters and TPOs.'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

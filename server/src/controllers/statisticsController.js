@@ -225,125 +225,101 @@ class StatisticsController {
         return Object.entries(courseCounts).map(([course, count]) => ({ course, count }));
       });
 
-      // Job statistics for the organization
-      const totalJobs = await Job.count({ where: { organizationId } });
-      const activeJobs = await Job.count({ where: { organizationId, status: 'active' } });
-      const closedJobs = await Job.count({ where: { organizationId, status: 'closed' } });
-      const draftJobs = await Job.count({ where: { organizationId, status: 'draft' } });
+      // Get all students in this university
+      const studentsInUniversity = await User.findAll({
+        where: { 
+          organizationId,
+          role: 'student'
+        },
+        attributes: ['id']
+      });
+      const studentIds = studentsInUniversity.map(s => s.id);
 
-      // Application statistics for this organization
+      // Job statistics - TPOs see all jobs in the system (to know what's available for their students)
+      const totalJobs = await Job.count();
+      const activeJobs = await Job.count({ where: { status: 'active' } });
+      const closedJobs = await Job.count({ where: { status: 'closed' } });
+      const draftJobs = await Job.count({ where: { status: 'draft' } });
+
+      // Application statistics - TPOs see applications from their students (regardless of job company)
       const totalApplications = await Application.count({
-        include: [
-          {
-            model: Job,
-            as: 'job',
-            where: { organizationId },
-            attributes: []
-          }
-        ]
+        where: {
+          studentId: { [Op.in]: studentIds }
+        }
       });
 
       const appliedApplications = await Application.count({
-        include: [
-          {
-            model: Job,
-            as: 'job',
-            where: { organizationId },
-            attributes: []
-          }
-        ],
-        where: { status: 'applied' }
+        where: {
+          studentId: { [Op.in]: studentIds },
+          status: 'applied'
+        }
       });
 
       const screeningApplications = await Application.count({
-        include: [
-          {
-            model: Job,
-            as: 'job',
-            where: { organizationId },
-            attributes: []
-          }
-        ],
-        where: { status: 'screening' }
+        where: {
+          studentId: { [Op.in]: studentIds },
+          status: 'screening'
+        }
       });
 
       const shortlistedApplications = await Application.count({
-        include: [
-          {
-            model: Job,
-            as: 'job',
-            where: { organizationId },
-            attributes: []
-          }
-        ],
-        where: { status: 'shortlisted' }
+        where: {
+          studentId: { [Op.in]: studentIds },
+          status: 'shortlisted'
+        }
       });
 
       const interviewedApplications = await Application.count({
-        include: [
-          {
-            model: Job,
-            as: 'job',
-            where: { organizationId },
-            attributes: []
-          }
-        ],
-        where: { status: 'interviewed' }
+        where: {
+          studentId: { [Op.in]: studentIds },
+          status: 'interviewed'
+        }
       });
 
       const selectedApplications = await Application.count({
-        include: [
-          {
-            model: Job,
-            as: 'job',
-            where: { organizationId },
-            attributes: []
-          }
-        ],
-        where: { status: 'selected' }
+        where: {
+          studentId: { [Op.in]: studentIds },
+          status: 'selected'
+        }
       });
 
       const rejectedApplications = await Application.count({
-        include: [
-          {
-            model: Job,
-            as: 'job',
-            where: { organizationId },
-            attributes: []
-          }
-        ],
-        where: { status: 'rejected' }
+        where: {
+          studentId: { [Op.in]: studentIds },
+          status: 'rejected'
+        }
       });
 
       const withdrawnApplications = await Application.count({
-        include: [
-          {
-            model: Job,
-            as: 'job',
-            where: { organizationId },
-            attributes: []
-          }
-        ],
-        where: { status: 'withdrawn' }
+        where: {
+          studentId: { [Op.in]: studentIds },
+          status: 'withdrawn'
+        }
       });
 
       // Event statistics
       const totalEvents = await Event.count({ where: { organizationId } });
 
-      // Get recent activity
+      // Get recent activity - applications from students in this university
       const recentActivity = await Application.findAll({
+        where: {
+          studentId: { [Op.in]: studentIds }
+        },
         include: [
           {
             model: Job,
             as: 'job',
-            where: { organizationId },
-            attributes: ['title'],
-            include: [{ model: Organization, as: 'organization', attributes: ['name'] }]
+            attributes: ['title', 'id'],
+            include: [{ 
+              model: Organization, 
+              as: 'organization', 
+              attributes: ['name', 'id'] 
+            }]
           },
           {
             model: User,
             as: 'student',
-            attributes: ['firstName', 'lastName']
+            attributes: ['firstName', 'lastName', 'id']
           }
         ],
         limit: 10,
@@ -418,6 +394,377 @@ class StatisticsController {
       next(error);
     }
   }
+
+  // Get advanced analytics with time-series data
+  async getAdvancedAnalytics(req, res, next) {
+    try {
+      const { period = '30', startDate, endDate } = req.query;
+      
+      // Calculate date range
+      let start, end;
+      if (startDate && endDate) {
+        start = new Date(startDate);
+        end = new Date(endDate);
+      } else {
+        const days = parseInt(period);
+        end = new Date();
+        start = new Date();
+        start.setDate(start.getDate() - days);
+      }
+
+      // User growth over time (daily)
+      const userGrowth = await this.getUserGrowthAnalytics(start, end, 'daily');
+      
+      // Job posting trends
+      const jobTrends = await this.getJobAnalytics(start, end);
+      
+      // Application trends
+      const applicationTrends = await this.getApplicationAnalytics(start, end);
+      
+      // Placement trends
+      const placementTrends = await this.getPlacementAnalytics(start, end);
+
+      res.json({
+        message: 'Advanced analytics retrieved successfully',
+        analytics: {
+          period: {
+            start: start.toISOString(),
+            end: end.toISOString()
+          },
+          userGrowth,
+          jobTrends,
+          applicationTrends,
+          placementTrends
+        }
+      });
+    } catch (error) {
+      console.error('Error in getAdvancedAnalytics:', error);
+      next(error);
+    }
+  }
+
+  // Get user growth analytics
+  async getUserGrowthAnalytics(startDate, endDate, granularity = 'daily') {
+    const users = await User.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [startDate, endDate]
+        }
+      },
+      attributes: ['createdAt', 'role'],
+      order: [['createdAt', 'ASC']]
+    });
+
+    const data = {};
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+
+    while (current <= end) {
+      const key = granularity === 'daily' 
+        ? current.toISOString().split('T')[0]
+        : granularity === 'weekly'
+        ? `${current.getFullYear()}-W${Math.ceil((current.getDate() + current.getDay()) / 7)}`
+        : `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!data[key]) {
+        data[key] = { date: key, total: 0, students: 0, recruiters: 0, tpos: 0, admins: 0 };
+      }
+
+      if (granularity === 'daily') {
+        current.setDate(current.getDate() + 1);
+      } else if (granularity === 'weekly') {
+        current.setDate(current.getDate() + 7);
+      } else {
+        current.setMonth(current.getMonth() + 1);
+      }
+    }
+
+    users.forEach(user => {
+      const date = new Date(user.createdAt);
+      const key = granularity === 'daily'
+        ? date.toISOString().split('T')[0]
+        : granularity === 'weekly'
+        ? `${date.getFullYear()}-W${Math.ceil((date.getDate() + date.getDay()) / 7)}`
+        : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (data[key]) {
+        data[key].total++;
+        const roleKey = user.role === 'tpo' ? 'tpos' : `${user.role}s`;
+        data[key][roleKey] = (data[key][roleKey] || 0) + 1;
+      }
+    });
+
+    return Object.values(data);
+  }
+
+  // Get job analytics
+  async getJobAnalytics(startDate, endDate) {
+    const jobs = await Job.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [startDate, endDate]
+        }
+      },
+      attributes: ['createdAt', 'status'],
+      include: [{
+        model: Organization,
+        as: 'organization',
+        attributes: ['id', 'name']
+      }],
+      order: [['createdAt', 'ASC']]
+    });
+
+    const dailyData = {};
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+
+    while (current <= end) {
+      const key = current.toISOString().split('T')[0];
+      dailyData[key] = { date: key, total: 0, active: 0, closed: 0, draft: 0 };
+      current.setDate(current.getDate() + 1);
+    }
+
+    jobs.forEach(job => {
+      const key = new Date(job.createdAt).toISOString().split('T')[0];
+      if (dailyData[key]) {
+        dailyData[key].total++;
+        dailyData[key][job.status] = (dailyData[key][job.status] || 0) + 1;
+      }
+    });
+
+    return {
+      daily: Object.values(dailyData),
+      total: jobs.length,
+      byStatus: {
+        active: jobs.filter(j => j.status === 'active').length,
+        closed: jobs.filter(j => j.status === 'closed').length,
+        draft: jobs.filter(j => j.status === 'draft').length
+      }
+    };
+  }
+
+  // Get application analytics
+  async getApplicationAnalytics(startDate, endDate) {
+    const applications = await Application.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [startDate, endDate]
+        }
+      },
+      attributes: ['createdAt', 'status'],
+      order: [['createdAt', 'ASC']]
+    });
+
+    const dailyData = {};
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+
+    while (current <= end) {
+      const key = current.toISOString().split('T')[0];
+      dailyData[key] = {
+        date: key,
+        total: 0,
+        applied: 0,
+        screening: 0,
+        shortlisted: 0,
+        interviewed: 0,
+        selected: 0,
+        rejected: 0,
+        withdrawn: 0
+      };
+      current.setDate(current.getDate() + 1);
+    }
+
+    applications.forEach(app => {
+      const key = new Date(app.createdAt).toISOString().split('T')[0];
+      if (dailyData[key]) {
+        dailyData[key].total++;
+        dailyData[key][app.status] = (dailyData[key][app.status] || 0) + 1;
+      }
+    });
+
+    // Funnel data
+    const funnel = {
+      applied: applications.filter(a => a.status === 'applied').length,
+      screening: applications.filter(a => a.status === 'screening').length,
+      shortlisted: applications.filter(a => a.status === 'shortlisted').length,
+      interviewed: applications.filter(a => a.status === 'interviewed').length,
+      selected: applications.filter(a => a.status === 'selected').length,
+      rejected: applications.filter(a => a.status === 'rejected').length,
+      withdrawn: applications.filter(a => a.status === 'withdrawn').length
+    };
+
+    return {
+      daily: Object.values(dailyData),
+      total: applications.length,
+      funnel,
+      conversionRate: funnel.applied > 0 
+        ? ((funnel.selected / funnel.applied) * 100).toFixed(2)
+        : 0
+    };
+  }
+
+  // Get placement analytics
+  async getPlacementAnalytics(startDate, endDate) {
+    const students = await StudentProfile.findAll({
+      include: [{
+        model: User,
+        as: 'user',
+        where: {
+          createdAt: {
+            [Op.between]: [startDate, endDate]
+          }
+        },
+        attributes: ['createdAt']
+      }],
+      attributes: ['placementStatus', 'createdAt']
+    });
+
+    const dailyData = {};
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+
+    while (current <= end) {
+      const key = current.toISOString().split('T')[0];
+      dailyData[key] = { date: key, placed: 0, unplaced: 0, deferred: 0 };
+      current.setDate(current.getDate() + 1);
+    }
+
+    students.forEach(student => {
+      if (student.user && student.user.createdAt) {
+        const key = new Date(student.user.createdAt).toISOString().split('T')[0];
+        if (dailyData[key]) {
+          dailyData[key][student.placementStatus] = (dailyData[key][student.placementStatus] || 0) + 1;
+        }
+      }
+    });
+
+    const totalPlaced = students.filter(s => s.placementStatus === 'placed').length;
+    const totalUnplaced = students.filter(s => s.placementStatus === 'unplaced').length;
+    const totalDeferred = students.filter(s => s.placementStatus === 'deferred').length;
+    const total = students.length;
+
+    return {
+      daily: Object.values(dailyData),
+      total,
+      placed: totalPlaced,
+      unplaced: totalUnplaced,
+      deferred: totalDeferred,
+      placementRate: total > 0 ? ((totalPlaced / total) * 100).toFixed(2) : 0
+    };
+  }
+
+  // Get top performers
+  async getTopPerformers(req, res, next) {
+    try {
+      const { limit = 10 } = req.query;
+
+      // Top universities by placements
+      const topUniversities = await StudentProfile.findAll({
+        include: [{
+          model: User,
+          as: 'user',
+          include: [{
+            model: Organization,
+            as: 'organization',
+            where: { type: 'university' },
+            attributes: ['id', 'name']
+          }]
+        }],
+        where: { placementStatus: 'placed' },
+        attributes: ['placementStatus'],
+        raw: true,
+        nest: true
+      }).then(results => {
+        const universityCounts = {};
+        results.forEach(result => {
+          const orgId = result.user.organization.id;
+          const orgName = result.user.organization.name;
+          if (!universityCounts[orgId]) {
+            universityCounts[orgId] = { id: orgId, name: orgName, placements: 0 };
+          }
+          universityCounts[orgId].placements++;
+        });
+        return Object.values(universityCounts)
+          .sort((a, b) => b.placements - a.placements)
+          .slice(0, parseInt(limit));
+      });
+
+      // Top companies by jobs posted
+      const topCompanies = await Job.findAll({
+        include: [{
+          model: Organization,
+          as: 'organization',
+          where: { type: 'company' },
+          attributes: ['id', 'name']
+        }],
+        attributes: ['id'],
+        raw: true,
+        nest: true
+      }).then(results => {
+        const companyCounts = {};
+        results.forEach(result => {
+          const orgId = result.organization.id;
+          const orgName = result.organization.name;
+          if (!companyCounts[orgId]) {
+            companyCounts[orgId] = { id: orgId, name: orgName, jobs: 0 };
+          }
+          companyCounts[orgId].jobs++;
+        });
+        return Object.values(companyCounts)
+          .sort((a, b) => b.jobs - a.jobs)
+          .slice(0, parseInt(limit));
+      });
+
+      // Top students by CGPA (if available)
+      const topStudents = await StudentProfile.findAll({
+        include: [{
+          model: User,
+          as: 'user',
+          attributes: ['id', 'firstName', 'lastName', 'email'],
+          include: [{
+            model: Organization,
+            as: 'organization',
+            attributes: ['name']
+          }]
+        }],
+        where: {
+          cgpa: { [Op.ne]: null }
+        },
+        attributes: ['id', 'cgpa', 'placementStatus'],
+        order: [['cgpa', 'DESC']],
+        limit: parseInt(limit)
+      });
+
+      res.json({
+        message: 'Top performers retrieved successfully',
+        topPerformers: {
+          universities: topUniversities,
+          companies: topCompanies,
+          students: topStudents.map(s => ({
+            id: s.user.id,
+            name: `${s.user.firstName} ${s.user.lastName}`,
+            email: s.user.email,
+            cgpa: s.cgpa,
+            placementStatus: s.placementStatus,
+            university: s.user.organization?.name
+          }))
+        }
+      });
+    } catch (error) {
+      console.error('Error in getTopPerformers:', error);
+      next(error);
+    }
+  }
 }
 
-module.exports = new StatisticsController();
+const controller = new StatisticsController();
+
+// Bind methods to preserve 'this' context
+module.exports = {
+  getAdminStats: controller.getAdminStats.bind(controller),
+  getTPOStats: controller.getTPOStats.bind(controller),
+  getDashboardOverview: controller.getDashboardOverview.bind(controller),
+  getAdvancedAnalytics: controller.getAdvancedAnalytics.bind(controller),
+  getTopPerformers: controller.getTopPerformers.bind(controller)
+};

@@ -68,17 +68,17 @@ const RecruiterDashboard = () => {
       const [jobsRes, applicationsRes, eventsRes, statsRes, candidatesRes] = await Promise.allSettled([
         api.get(`/jobs?limit=10&organizationId=${user.organizationId}`),
         api.get(`/applications?limit=10&organizationId=${user.organizationId}`),
-        api.get(`/events?upcoming=true&limit=5&organizationId=${user.organizationId}`),
-        api.get(`/jobs/stats?organizationId=${user.organizationId}`),
-        api.get(`/users/top-candidates?limit=5&organizationId=${user.organizationId}`)
+        api.get(`/events?upcoming=true&limit=5&organizationId=${user.organizationId}`).catch(() => ({ status: 'rejected', value: { events: [] } })),
+        api.get(`/jobs/stats?organizationId=${user.organizationId}`).catch(() => ({ status: 'rejected', value: { stats: {} } })),
+        api.get(`/users/top-candidates?limit=5&organizationId=${user.organizationId}`).catch(() => ({ status: 'rejected', value: { candidates: [] } }))
       ]);
 
       // Handle successful responses
-      const jobs = jobsRes.status === 'fulfilled' ? (jobsRes.value.jobs || []) : [];
-      const applications = applicationsRes.status === 'fulfilled' ? (applicationsRes.value.applications || []) : [];
-      const events = eventsRes.status === 'fulfilled' ? (eventsRes.value.events || []) : [];
-      const stats = statsRes.status === 'fulfilled' ? (statsRes.value.stats || {}) : {};
-      const candidates = candidatesRes.status === 'fulfilled' ? (candidatesRes.value.candidates || []) : [];
+      const jobs = jobsRes.status === 'fulfilled' ? (jobsRes.value?.data?.jobs || jobsRes.value?.jobs || []) : [];
+      const applications = applicationsRes.status === 'fulfilled' ? (applicationsRes.value?.data?.applications || applicationsRes.value?.applications || []) : [];
+      const events = eventsRes.status === 'fulfilled' ? (eventsRes.value?.data?.events || eventsRes.value?.events || []) : [];
+      const stats = statsRes.status === 'fulfilled' ? (statsRes.value?.data?.stats || statsRes.value?.stats || {}) : {};
+      const candidates = candidatesRes.status === 'fulfilled' ? (candidatesRes.value?.data?.candidates || candidatesRes.value?.candidates || []) : [];
 
       // Calculate derived stats
       const totalViews = jobs.reduce((sum, job) => sum + (parseInt(job.viewCount) || 0), 0);
@@ -862,18 +862,18 @@ const RecruiterDashboard = () => {
             <div className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 {[
-                  { status: 'applied', label: 'Applied', color: 'blue' },
-                  { status: 'screening', label: 'Screening', color: 'yellow' },
-                  { status: 'shortlisted', label: 'Shortlisted', color: 'purple' },
-                  { status: 'interviewed', label: 'Interviewed', color: 'orange' },
-                  { status: 'selected', label: 'Selected', color: 'green' },
-                  { status: 'rejected', label: 'Rejected', color: 'red' },
-                  { status: 'withdrawn', label: 'Withdrawn', color: 'gray' }
+                  { status: 'applied', label: 'Applied', color: 'blue', colorClass: 'text-blue-600' },
+                  { status: 'screening', label: 'Screening', color: 'yellow', colorClass: 'text-yellow-600' },
+                  { status: 'shortlisted', label: 'Shortlisted', color: 'purple', colorClass: 'text-purple-600' },
+                  { status: 'interviewed', label: 'Interviewed', color: 'orange', colorClass: 'text-orange-600' },
+                  { status: 'selected', label: 'Selected', color: 'green', colorClass: 'text-green-600' },
+                  { status: 'rejected', label: 'Rejected', color: 'red', colorClass: 'text-red-600' },
+                  { status: 'withdrawn', label: 'Withdrawn', color: 'gray', colorClass: 'text-gray-600' }
                 ].map((stage) => {
                   const count = dashboardData.recentApplications.filter(app => app.status === stage.status).length;
                   return (
                     <div key={stage.status} className="text-center">
-                      <div className={`text-2xl font-bold text-${stage.color}-600`}>
+                      <div className={`text-2xl font-bold ${stage.colorClass}`}>
                         {count}
                       </div>
                       <div className="text-sm text-gray-600">{stage.label}</div>

@@ -60,8 +60,8 @@ const Header = () => {
     const baseItems = [
       { 
         name: 'Dashboard', 
-        href: '/', 
-        current: location.pathname === '/',
+        href: '/dashboard', 
+        current: location.pathname === '/dashboard',
         icon: HomeIcon
       },
       { 

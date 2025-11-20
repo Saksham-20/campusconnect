@@ -1,5 +1,5 @@
 // server/src/controllers/userController.js
-const { User, StudentProfile, RecruiterProfile, Organization, Achievement } = require('../models');
+const { User, StudentProfile, RecruiterProfile, Organization, Achievement, Application, Job } = require('../models');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
 
@@ -156,25 +156,48 @@ class UserController {
 
   async getAllUsers(req, res, next) {
     try {
-      const { page = 1, limit = 10, role, organizationId, isActive } = req.query;
+      const { page = 1, limit = 10, role, organizationId, organizationType, isActive, search } = req.query;
       const offset = (page - 1) * limit;
 
       const whereClause = {};
       if (role) whereClause.role = role;
       if (organizationId) whereClause.organizationId = organizationId;
       if (isActive !== undefined) whereClause.isActive = isActive === 'true';
+      
+      // Search functionality
+      if (search) {
+        whereClause[Op.or] = [
+          { firstName: { [Op.iLike]: `%${search}%` } },
+          { lastName: { [Op.iLike]: `%${search}%` } },
+          { email: { [Op.iLike]: `%${search}%` } }
+        ];
+      }
+
+      // Build include clause with organization type filter
+      const includeClause = [
+        { 
+          model: Organization, 
+          as: 'organization',
+          required: false,
+          ...(organizationType ? { where: { type: organizationType } } : {})
+        },
+        { model: StudentProfile, as: 'studentProfile', required: false },
+        { model: RecruiterProfile, as: 'recruiterProfile', required: false }
+      ];
+
+      // If filtering by organization type, make organization required
+      if (organizationType) {
+        includeClause[0].required = true;
+      }
 
       const { count, rows: users } = await User.findAndCountAll({
         where: whereClause,
-        include: [
-          { model: Organization, as: 'organization' },
-          { model: StudentProfile, as: 'studentProfile' },
-          { model: RecruiterProfile, as: 'recruiterProfile' }
-        ],
+        include: includeClause,
         attributes: { exclude: ['passwordHash'] },
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        distinct: true // Important when using includes with filters
       });
 
       res.json({
@@ -350,7 +373,7 @@ class UserController {
     try {
       const { limit = 10, organizationId } = req.query;
       
-      // For recruiters, only show candidates from their organization
+      // For recruiters, show top candidates who have applied to their jobs
       const targetOrgId = organizationId || req.user.organizationId;
       
       if (!targetOrgId) {
@@ -360,21 +383,44 @@ class UserController {
         });
       }
 
+      // Get all jobs from this organization
+      const jobs = await Job.findAll({
+        where: { organizationId: targetOrgId },
+        attributes: ['id']
+      });
+      const jobIds = jobs.map(job => job.id);
+
+      if (jobIds.length === 0) {
+        return res.json({
+          message: 'Top candidates retrieved successfully',
+          candidates: []
+        });
+      }
+
+      // Get top candidates who have applied to jobs from this organization
       const candidates = await User.findAll({
         where: {
           role: 'student',
-          isActive: true,
-          organizationId: targetOrgId
+          isActive: true
         },
         include: [
           {
             model: StudentProfile,
             as: 'studentProfile',
-            required: false // Make it optional so we get students even without profiles
+            required: false
           },
           {
             model: Organization,
             as: 'organization'
+          },
+          {
+            model: Application,
+            as: 'applications',
+            where: {
+              jobId: { [Op.in]: jobIds }
+            },
+            required: true, // Only students who have applied
+            attributes: ['id', 'status', 'createdAt']
           }
         ],
         attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
@@ -382,7 +428,8 @@ class UserController {
         order: [
           ['studentProfile', 'cgpa', 'DESC NULLS LAST'],
           ['firstName', 'ASC']
-        ]
+        ],
+        distinct: true
       });
 
       res.json({
