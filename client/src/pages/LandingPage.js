@@ -275,21 +275,21 @@ const LandingPage = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold mb-6">Ready to transform your campus?</h2>
-            <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
+            <h2 className="text-4xl font-bold mb-6 text-gray-900">Ready to transform your campus?</h2>
+            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
               Join hundreds of institutions already using EduMapping to improve student outcomes.
             </p>
             <div className="flex justify-center gap-4">
               <Link
                 to="/login"
                 state={{ from: { pathname: '/dashboard' } }}
-                className="px-8 py-4 bg-white text-[#138808] rounded-full font-bold shadow-lg hover:bg-gray-50 transition-colors"
+                className="px-8 py-4 bg-gradient-to-r from-[#FF9933] to-[#138808] text-white rounded-full font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
               >
                 Get Started
               </Link>
               <button
                 onClick={() => handlePageChange('contact')}
-                className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full font-bold hover:bg-white/10 transition-colors"
+                className="px-8 py-4 bg-white text-[#138808] border-2 border-[#138808] rounded-full font-bold hover:bg-green-50 transition-all transform hover:-translate-y-1"
               >
                 Contact Us
               </button>
@@ -518,23 +518,139 @@ const LandingPage = () => {
     </div>
   );
 
-  const renderContactPage = () => (
-    <div className="pt-20">
-      <section className="bg-[#156395] text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
+  // Extracted ContactSection Component
+  const ContactSection = () => {
+    const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+    const [status, setStatus] = useState({ type: '', message: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+
+      const subject = `Contact Form Submission from ${formData.name}`;
+      const body = `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`;
+
+      window.location.href = `mailto:hello@edumapping.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+      setStatus({ type: 'success', message: 'Opening your email client...' });
+      setFormData({ name: '', email: '', message: '' });
+    };
+
+    return (
+      <div className="pt-20">
+        {/* Contact Hero */}
+        <section className="relative py-20 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-green-50">
+          <div className="container mx-auto px-4 relative z-10 text-center">
+            <motion.h1
+              className="text-5xl font-bold mb-6 text-gray-900"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              Get in Touch with <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] to-[#138808]">
+                EduMapping
+              </span>
+            </motion.h1>
+            <motion.p
+              className="text-xl text-gray-600 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+            </motion.p>
+          </div>
+        </section>
+
+        <div className="container mx-auto px-4 py-12 max-w-6xl">
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* Contact Info Cards */}
+            <div className="space-y-6">
+              <motion.div
+                className="p-8 rounded-3xl bg-white shadow-lg border border-gray-100"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-2xl mb-4 text-blue-600">📧</div>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">Email Us</h3>
+                <p className="text-gray-600">hello@edumapping.com<br />support@edumapping.com</p>
+              </motion.div>
+
+              <motion.div
+                className="p-8 rounded-3xl bg-white shadow-lg border border-gray-100"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-2xl mb-4 text-[#138808]">📞</div>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">Call Us</h3>
+                <p className="text-gray-600">+91 9104991059<br />Mon - Fri, 9am - 6pm</p>
+              </motion.div>
+            </div>
+
+            {/* Contact Form */}
+            <motion.div
+              className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF9933] focus:border-transparent outline-none transition-all"
+                    required
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF9933] focus:border-transparent outline-none transition-all"
+                    required
+                    placeholder="john@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <textarea
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    rows="5"
+                    className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF9933] focus:border-transparent outline-none transition-all"
+                    required
+                    placeholder="How can we help you?"
+                  ></textarea>
+                </div>
+
+                {status.message && (
+                  <div className={`p-4 rounded-xl ${status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                    {status.message}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 bg-gradient-to-r from-[#FF9933] to-[#138808] text-white rounded-xl font-bold hover:shadow-lg transition-all transform hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
         </div>
-      </section>
-      <div className="container mx-auto px-4 py-12 max-w-2xl">
-        <form onSubmit={handleContactSubmit} className="space-y-6">
-          <input type="text" placeholder="Your Name" className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#156395] outline-none" required />
-          <input type="email" placeholder="Your Email" className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#156395] outline-none" required />
-          <textarea placeholder="Message" rows="5" className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#156395] outline-none" required></textarea>
-          <button type="submit" className="w-full py-4 bg-[#156395] text-white rounded-xl font-bold hover:bg-[#0f4b72]">Send Message</button>
-        </form>
-      </div>
-    </div>
-  );
+      </div >
+    );
+  };
 
   return (
     <div className="font-sans text-gray-900">
@@ -615,7 +731,7 @@ const LandingPage = () => {
         {currentPage === 'features' && renderFeaturesPage()}
         {currentPage === 'about' && renderAboutPage()}
         {currentPage === 'services' && renderServicesPage()}
-        {currentPage === 'contact' && renderContactPage()}
+        {currentPage === 'contact' && <ContactSection />}
       </main>
 
       {/* Footer */}
@@ -652,7 +768,7 @@ const LandingPage = () => {
           </div>
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p>&copy; 2024 EduMapping. All rights reserved.</p>
-            <p className="text-sm">Made by <span className="text-white font-medium">Globoniks</span></p>
+            <p className="text-sm">Developed by <span className="text-white font-medium">Globoniks</span></p>
           </div>
         </div>
       </footer>

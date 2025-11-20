@@ -28,6 +28,7 @@ const achievementRoutes = require('./routes/achievements');
 const statisticsRoutes = require('./routes/statistics');
 const approvalRoutes = require('./routes/approvals');
 const adminRoutes = require('./routes/admin');
+const contactRoutes = require('./routes/contact');
 
 
 const app = express();
@@ -57,10 +58,10 @@ app.use(cors({
       'http://127.0.0.1:3000'
     ];
     // Support multiple frontend URLs (comma-separated) and individual URLs
-    const frontendUrls = process.env.FRONTEND_URL 
+    const frontendUrls = process.env.FRONTEND_URL
       ? process.env.FRONTEND_URL.split(',').map(url => url.trim()).filter(Boolean)
       : [];
-    
+
     const allowed = new Set([
       ...frontendUrls,
       ...(process.env.NODE_ENV === 'development' ? defaultDevOrigins : [])
@@ -170,10 +171,10 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.API_PUBLIC_URL 
-          || (process.env.NODE_ENV === 'production' 
-                ? `http://localhost:${process.env.PORT || 5000}`
-                : `http://localhost:${process.env.PORT || 5000}`),
+        url: process.env.API_PUBLIC_URL
+          || (process.env.NODE_ENV === 'production'
+            ? `http://localhost:${process.env.PORT || 5000}`
+            : `http://localhost:${process.env.PORT || 5000}`),
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server'
       }
     ],
@@ -209,14 +210,14 @@ app.get('/api/debug/user/:email', async (req, res) => {
   try {
     const { User, Organization } = models;
     const { email } = req.params;
-    
+
     console.log('🔍 Debug: Looking for user with email:', email);
     console.log('🔍 Debug: Sequelize instance:', sequelize ? 'Available' : 'Not available');
-    
+
     // Test database connection first
     await sequelize.authenticate();
     console.log('🔍 Debug: Database connection successful');
-    
+
     const user = await User.findOne({
       where: { email },
       include: [
@@ -226,9 +227,9 @@ app.get('/api/debug/user/:email', async (req, res) => {
         }
       ]
     });
-    
+
     console.log('🔍 Debug: User found:', user ? 'Yes' : 'No');
-    
+
     res.json({
       found: !!user,
       user: user ? {
@@ -250,17 +251,17 @@ app.get('/api/debug/user/:email', async (req, res) => {
 app.post('/api/debug/seed', async (req, res) => {
   try {
     console.log('🌱 Starting manual database seeding...');
-    
+
     // Run the seeders
     const { exec } = require('child_process');
     const { promisify } = require('util');
     const execAsync = promisify(exec);
-    
+
     const { stdout, stderr } = await execAsync('NODE_ENV=production npx sequelize-cli db:seed:all');
-    
+
     console.log('🌱 Seeding output:', stdout);
     if (stderr) console.log('🌱 Seeding errors:', stderr);
-    
+
     res.json({
       success: true,
       message: 'Database seeded successfully',
@@ -268,7 +269,7 @@ app.post('/api/debug/seed', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Seeding error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       error: error.message,
       output: error.stdout || '',
@@ -281,14 +282,14 @@ app.post('/api/debug/seed', async (req, res) => {
 app.get('/api/debug/users', async (req, res) => {
   try {
     const { User, Organization } = models;
-    
+
     console.log('🔍 Debug: Fetching all users...');
     console.log('🔍 Debug: Sequelize instance:', sequelize ? 'Available' : 'Not available');
-    
+
     // Test database connection first
     await sequelize.authenticate();
     console.log('🔍 Debug: Database connection successful');
-    
+
     const users = await User.findAll({
       include: [
         {
@@ -298,9 +299,9 @@ app.get('/api/debug/users', async (req, res) => {
       ],
       limit: 10
     });
-    
+
     console.log('🔍 Debug: Found', users.length, 'users');
-    
+
     res.json({
       count: users.length,
       users: users.map(user => ({
@@ -326,15 +327,15 @@ app.post('/api/debug/test-login', async (req, res) => {
   try {
     const { email, password } = req.body;
     console.log('🔍 Debug: Testing login for email:', email);
-    
+
     const { User, Organization } = models;
     const bcrypt = require('bcryptjs');
-    
+
     // Test database connection first
     console.log('🔍 Debug: Testing database connection...');
     await sequelize.authenticate();
     console.log('🔍 Debug: Database connection successful');
-    
+
     // Step 1: Check if user exists
     console.log('🔍 Step 1: Looking for user...');
     const user = await User.findOne({
@@ -346,7 +347,7 @@ app.post('/api/debug/test-login', async (req, res) => {
         }
       ]
     });
-    
+
     console.log('🔍 User found:', user ? 'Yes' : 'No');
     if (user) {
       console.log('🔍 User details:', {
@@ -359,7 +360,7 @@ app.post('/api/debug/test-login', async (req, res) => {
         organizationId: user.organizationId
       });
     }
-    
+
     if (!user) {
       return res.json({
         success: false,
@@ -368,12 +369,12 @@ app.post('/api/debug/test-login', async (req, res) => {
         user: null
       });
     }
-    
+
     // Step 2: Check password
     console.log('🔍 Step 2: Checking password...');
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     console.log('🔍 Password valid:', isPasswordValid);
-    
+
     if (!isPasswordValid) {
       return res.json({
         success: false,
@@ -386,7 +387,7 @@ app.post('/api/debug/test-login', async (req, res) => {
         }
       });
     }
-    
+
     // Step 3: Check approval status
     console.log('🔍 Step 3: Checking approval status...');
     if (user.approvalStatus !== 'approved') {
@@ -402,7 +403,7 @@ app.post('/api/debug/test-login', async (req, res) => {
         }
       });
     }
-    
+
     // Step 4: Generate tokens (simplified)
     console.log('🔍 Step 4: Generating tokens...');
     const jwt = require('jsonwebtoken');
@@ -411,9 +412,9 @@ app.post('/api/debug/test-login', async (req, res) => {
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '1h' }
     );
-    
+
     console.log('🔍 Access token generated:', !!accessToken);
-    
+
     res.json({
       success: true,
       message: 'Login test successful',
@@ -427,10 +428,10 @@ app.post('/api/debug/test-login', async (req, res) => {
       },
       hasToken: !!accessToken
     });
-    
+
   } catch (error) {
     console.error('❌ Debug login error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       step: 'error',
       error: error.message,
@@ -453,13 +454,15 @@ app.use('/api/organizations', organizationsRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/approvals', approvalRoutes);
+app.use('/api/approvals', approvalRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Serve static files from React app in production (only if enabled)
 if (process.env.NODE_ENV === 'production' && process.env.SERVE_CLIENT !== 'false') {
   const clientBuildPath = path.join(__dirname, '../../client/build');
   app.use(express.static(clientBuildPath));
-  
+
   // Handle React routing - return all non-API requests to React app
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api')) {
@@ -506,7 +509,7 @@ const connectDB = async (retries = 5, delay = 5000) => {
         console.log('🔍 DATABASE_URL contains .render.com:', process.env.DATABASE_URL.includes('.render.com'));
         console.log('🔍 DATABASE_URL contains singapore-postgres:', process.env.DATABASE_URL.includes('singapore-postgres'));
       }
-      
+
       // Log the actual config being used
       console.log('🔍 Sequelize config:', {
         dialect: sequelize.options.dialect,
@@ -515,25 +518,25 @@ const connectDB = async (retries = 5, delay = 5000) => {
         port: sequelize.config.port,
         database: sequelize.config.database
       });
-      
+
       await sequelize.authenticate();
       console.log('✅ Database connection established successfully');
-      
+
       if (process.env.NODE_ENV === 'development') {
         await sequelize.sync({ alter: true });
         console.log('✅ Database synchronized');
       }
       return; // Success, exit the retry loop
-      
+
     } catch (error) {
       console.error(`❌ Database connection attempt ${i + 1} failed:`, error.message);
-      
+
       if (i === retries - 1) {
         console.error('❌ All database connection attempts failed');
         console.error('❌ Final error:', error);
         process.exit(1);
       }
-      
+
       console.log(`⏳ Waiting ${delay}ms before retry...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
