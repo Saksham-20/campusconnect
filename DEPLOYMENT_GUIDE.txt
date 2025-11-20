@@ -1,0 +1,396 @@
+================================================================================
+                    CAMPUS CONNECT - DEPLOYMENT GUIDE
+================================================================================
+
+This guide contains step-by-step instructions to deploy and update the 
+Campus Connect application on your VPS server.
+
+Server Details:
+- VPS IP: 178.16.138.82
+- SSH Access: ssh root@178.16.138.82
+- Project Path: /var/www/campusconnect
+- Repository: https://github.com/Saksham-20/campusconnect.git
+
+================================================================================
+                        INITIAL SETUP (One-time)
+================================================================================
+
+1. Connect to VPS:
+   ssh root@178.16.138.82
+
+2. Navigate to project directory:
+   cd /var/www/campusconnect
+
+3. Initialize Git (if not already done):
+   git init
+   git remote add origin https://github.com/Saksham-20/campusconnect.git
+   git fetch origin
+   git checkout -b main origin/main
+
+4. Install dependencies:
+   cd server
+   npm install --production
+   cd ../client
+   npm install --production
+
+5. Set up environment variables:
+   - Edit server/.env with database credentials and API keys
+   - Edit client/.env with API URL
+
+6. Run database migrations:
+   cd server
+   npx sequelize-cli db:migrate
+
+7. Build frontend:
+   cd ../client
+   npm run build
+
+8. Start server with PM2:
+   cd ../server
+   pm2 start src/server.js --name campusconnect-server
+   pm2 save
+   pm2 startup
+
+================================================================================
+                    REGULAR UPDATE/DEPLOYMENT STEPS
+================================================================================
+
+STEP 1: Push code from local machine (Windows)
+----------------------------------------------
+cd D:\REACT\campusconnect
+git add .
+git commit -m "Your commit message"
+git push origin main
+
+
+STEP 2: Connect to VPS
+----------------------------------------------
+ssh root@178.16.138.82
+
+
+STEP 3: Navigate to project directory
+----------------------------------------------
+cd /var/www/campusconnect
+
+
+STEP 4: Backup environment files (IMPORTANT!)
+----------------------------------------------
+cp server/.env server/.env.backup
+cp client/.env client/.env.backup
+
+
+STEP 5: Pull latest code from repository
+----------------------------------------------
+git pull origin main
+
+If you get conflicts with untracked files:
+   git fetch origin
+   git reset --hard origin/main
+   cp server/.env.backup server/.env
+   cp client/.env.backup client/.env
+
+
+STEP 6: Install/Update server dependencies
+----------------------------------------------
+cd server
+npm install --production
+
+
+STEP 7: Run database migrations
+----------------------------------------------
+npx sequelize-cli db:migrate
+
+
+STEP 8: Build frontend (CRITICAL - removes old build)
+----------------------------------------------
+cd ../client
+rm -rf build
+npm install --production
+npm run build
+
+Verify build was created:
+   ls -la build/ | head -10
+
+
+STEP 9: Restart PM2 process
+----------------------------------------------
+cd ../server
+pm2 restart campusconnect-server
+
+
+STEP 10: Check server status and logs
+----------------------------------------------
+pm2 status
+pm2 logs campusconnect-server --lines 30
+
+
+STEP 11: Restart Nginx (if using reverse proxy)
+----------------------------------------------
+sudo systemctl restart nginx
+# or
+sudo nginx -s reload
+
+
+STEP 12: Clear browser cache
+----------------------------------------------
+- Hard refresh: Ctrl + Shift + R (Windows/Linux) or Cmd + Shift + R (Mac)
+- Or test in incognito/private mode
+
+
+================================================================================
+                    QUICK DEPLOYMENT (One-liner)
+================================================================================
+
+After SSH into VPS, run this complete deployment command:
+
+cd /var/www/campusconnect && \
+cp server/.env server/.env.backup 2>/dev/null || true && \
+cp client/.env client/.env.backup 2>/dev/null || true && \
+git pull origin main && \
+cd server && npm install --production && npx sequelize-cli db:migrate && \
+cd ../client && rm -rf build && npm install --production && npm run build && \
+cd ../server && pm2 restart campusconnect-server && \
+pm2 logs campusconnect-server --lines 20
+
+
+================================================================================
+                    TROUBLESHOOTING COMMANDS
+================================================================================
+
+Check PM2 status:
+   pm2 status
+
+View PM2 logs:
+   pm2 logs campusconnect-server
+   pm2 logs campusconnect-server --lines 50
+   pm2 logs campusconnect-server --err
+
+Restart PM2 process:
+   pm2 restart campusconnect-server
+
+Stop PM2 process:
+   pm2 stop campusconnect-server
+
+Delete PM2 process:
+   pm2 delete campusconnect-server
+
+Check if server is running on port:
+   netstat -tulpn | grep :5000
+   ss -tulpn | grep :5000
+
+Check build directory:
+   ls -la /var/www/campusconnect/client/build/
+
+Check git status:
+   cd /var/www/campusconnect
+   git status
+   git log --oneline -5
+
+Check Nginx status:
+   sudo systemctl status nginx
+   sudo nginx -t
+
+Check Nginx config:
+   cat /etc/nginx/sites-available/campusconnect
+   cat /etc/nginx/sites-enabled/campusconnect
+
+Test database connection:
+   cd /var/www/campusconnect/server
+   node -e "require('./src/models').sequelize.authenticate().then(() => console.log('✅ DB Connected')).catch(e => console.error('❌ DB Error:', e))"
+
+
+================================================================================
+                    PM2 MANAGEMENT COMMANDS
+================================================================================
+
+List all processes:
+   pm2 list
+   pm2 status
+
+View logs:
+   pm2 logs
+   pm2 logs campusconnect-server
+   pm2 logs campusconnect-server --lines 100
+
+Restart process:
+   pm2 restart campusconnect-server
+   pm2 restart all
+
+Stop process:
+   pm2 stop campusconnect-server
+
+Start process:
+   pm2 start campusconnect-server
+
+Delete process:
+   pm2 delete campusconnect-server
+
+Save process list:
+   pm2 save
+
+Setup startup script:
+   pm2 startup
+   (Then run the command it outputs)
+
+Monitor processes:
+   pm2 monit
+
+
+================================================================================
+                    GIT COMMANDS REFERENCE
+================================================================================
+
+Check current status:
+   git status
+
+View commit history:
+   git log --oneline -10
+
+Pull latest changes:
+   git pull origin main
+
+Fetch without merging:
+   git fetch origin
+
+Reset to match remote (WARNING: overwrites local changes):
+   git fetch origin
+   git reset --hard origin/main
+
+View remote repository:
+   git remote -v
+
+Check current branch:
+   git branch
+
+
+================================================================================
+                    DATABASE MIGRATION COMMANDS
+================================================================================
+
+Run all pending migrations:
+   cd /var/www/campusconnect/server
+   npx sequelize-cli db:migrate
+
+Check migration status:
+   npx sequelize-cli db:migrate:status
+
+Rollback last migration:
+   npx sequelize-cli db:migrate:undo
+
+Rollback all migrations:
+   npx sequelize-cli db:migrate:undo:all
+
+Run specific migration:
+   npx sequelize-cli db:migrate --to XXXX-migration-name.js
+
+
+================================================================================
+                    ENVIRONMENT VARIABLES
+================================================================================
+
+IMPORTANT: Always backup .env files before pulling code!
+
+Backup:
+   cp server/.env server/.env.backup
+   cp client/.env client/.env.backup
+
+Restore:
+   cp server/.env.backup server/.env
+   cp client/.env.backup client/.env
+
+Edit environment files:
+   nano server/.env
+   nano client/.env
+
+
+================================================================================
+                    COMMON ISSUES & SOLUTIONS
+================================================================================
+
+ISSUE: "fatal: not a git repository"
+SOLUTION: Run git init and add remote (see Initial Setup)
+
+ISSUE: "PM2 process not found"
+SOLUTION: Start process with: pm2 start src/server.js --name campusconnect-server
+
+ISSUE: "Changes not showing on website"
+SOLUTION: 
+   1. Rebuild frontend: cd client && rm -rf build && npm run build
+   2. Restart PM2: pm2 restart campusconnect-server
+   3. Restart Nginx: sudo systemctl restart nginx
+   4. Clear browser cache: Ctrl + Shift + R
+
+ISSUE: "Git pull conflicts"
+SOLUTION: 
+   git fetch origin
+   git reset --hard origin/main
+   (Then restore .env files from backup)
+
+ISSUE: "Database connection error"
+SOLUTION:
+   1. Check .env file has correct DB credentials
+   2. Verify PostgreSQL is running: sudo systemctl status postgresql
+   3. Test connection (see Troubleshooting Commands)
+
+ISSUE: "Port already in use"
+SOLUTION:
+   1. Find process: netstat -tulpn | grep :5000
+   2. Kill process: kill -9 <PID>
+   3. Or change port in .env file
+
+
+================================================================================
+                    DEPLOYMENT CHECKLIST
+================================================================================
+
+Before deploying:
+   [ ] Code committed and pushed to GitHub
+   [ ] Environment variables backed up
+   [ ] Database backup created (if major changes)
+
+During deployment:
+   [ ] Connected to VPS via SSH
+   [ ] Navigated to project directory
+   [ ] Pulled latest code
+   [ ] Installed/updated dependencies
+   [ ] Ran database migrations
+   [ ] Rebuilt frontend (removed old build)
+   [ ] Restarted PM2 process
+   [ ] Checked PM2 logs for errors
+   [ ] Restarted Nginx (if applicable)
+
+After deployment:
+   [ ] Verified website is accessible
+   [ ] Tested key functionalities
+   [ ] Checked server logs for errors
+   [ ] Cleared browser cache and tested
+   [ ] Verified database changes applied
+
+
+================================================================================
+                    QUICK REFERENCE COMMANDS
+================================================================================
+
+# Full deployment
+cd /var/www/campusconnect && git pull origin main && \
+cd server && npm install --production && npx sequelize-cli db:migrate && \
+cd ../client && rm -rf build && npm install --production && npm run build && \
+cd ../server && pm2 restart campusconnect-server
+
+# Check status
+pm2 status && pm2 logs campusconnect-server --lines 20
+
+# Restart everything
+pm2 restart campusconnect-server && sudo systemctl restart nginx
+
+# View logs
+pm2 logs campusconnect-server --lines 50
+
+
+================================================================================
+                            END OF GUIDE
+================================================================================
+
+Last Updated: 2024
+For issues or questions, check the troubleshooting section above.
+

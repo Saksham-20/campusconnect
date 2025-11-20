@@ -66,7 +66,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -100,12 +100,15 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           {/* Logo */}
-          <div className="flex justify-center">
-            <img 
-              src="/logo-cropped.svg" 
-              alt="Logo" 
-              className="h-16 w-auto"
+          <div className="flex flex-col items-center justify-center">
+            <img
+              src="/logo.svg"
+              alt="EduMapping Logo"
+              className="h-20 w-auto mb-4"
             />
+            <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#FF9933] to-[#138808] drop-shadow-sm">
+              EduMapping
+            </span>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
@@ -140,9 +143,8 @@ const Login = () => {
                 autoComplete="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
-                  errors.email ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'
+                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                 placeholder="Enter your email"
               />
               {errors.email && (
@@ -162,9 +164,8 @@ const Login = () => {
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                  className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'
+                    } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                   placeholder="Enter your password"
                 />
                 <button

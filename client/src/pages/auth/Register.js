@@ -43,7 +43,7 @@ const Register = () => {
       // Only fetch approved organizations for registration
       const response = await api.get('/organizations?verified=true');
       // Filter to only show approved organizations
-      const approvedOrgs = (response.organizations || []).filter(org => 
+      const approvedOrgs = (response.organizations || []).filter(org =>
         org.approvalStatus === 'approved' || org.approvalStatus === undefined
       );
       setOrganizations(approvedOrgs);
@@ -137,7 +137,7 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -146,7 +146,7 @@ const Register = () => {
     try {
       let submitData = { ...formData };
       delete submitData.confirmPassword;
-      
+
       // Handle new organization registration
       if (formData.role === 'new_university' || formData.role === 'new_company') {
         try {
@@ -163,11 +163,11 @@ const Register = () => {
 
           const orgResponse = await api.post('/organizations/register', orgData);
           const newOrg = orgResponse.organization;
-          
+
           // Set the role and organizationId for user registration
           submitData.role = formData.role === 'new_university' ? 'tpo' : 'recruiter';
           submitData.organizationId = newOrg.id;
-          
+
           // Clean up organization fields
           delete submitData.organizationName;
           delete submitData.organizationDomain;
@@ -175,7 +175,7 @@ const Register = () => {
           delete submitData.organizationContactPhone;
           delete submitData.organizationWebsite;
           delete submitData.organizationAddress;
-          
+
           toast.success(`${formData.role === 'new_university' ? 'University' : 'Company'} created successfully. Your account is being created...`);
         } catch (orgError) {
           throw new Error(orgError.message || `Failed to create ${formData.role === 'new_university' ? 'university' : 'company'}`);
@@ -188,7 +188,7 @@ const Register = () => {
       }
 
       const response = await register(submitData);
-      
+
       // Check if user needs approval
       if (response.user.approvalStatus === 'pending') {
         // Show appropriate message based on registration type
@@ -239,12 +239,15 @@ const Register = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           {/* Logo */}
-          <div className="flex justify-center">
-            <img 
-              src="/logo-cropped.svg" 
-              alt="Logo" 
-              className="h-16 w-auto"
+          <div className="flex flex-col items-center justify-center">
+            <img
+              src="/logo.svg"
+              alt="EduMapping Logo"
+              className="h-20 w-auto mb-4"
             />
+            <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#FF9933] to-[#138808] drop-shadow-sm">
+              EduMapping
+            </span>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
@@ -280,9 +283,8 @@ const Register = () => {
                   type="text"
                   value={formData.firstName}
                   onChange={handleChange}
-                  className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
-                    errors.firstName ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                  className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${errors.firstName ? 'border-red-300' : 'border-gray-300'
+                    } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                   placeholder="First name"
                 />
                 {errors.firstName && (
@@ -300,9 +302,8 @@ const Register = () => {
                   type="text"
                   value={formData.lastName}
                   onChange={handleChange}
-                  className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
-                    errors.lastName ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                  className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${errors.lastName ? 'border-red-300' : 'border-gray-300'
+                    } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                   placeholder="Last name"
                 />
                 {errors.lastName && (
@@ -323,9 +324,8 @@ const Register = () => {
                 autoComplete="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
-                  errors.email ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'
+                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                 placeholder="Enter your email"
               />
               {errors.email && (
@@ -344,9 +344,8 @@ const Register = () => {
                 type="tel"
                 value={formData.phone}
                 onChange={handleChange}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
-                  errors.phone ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-300'
+                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                 placeholder="Enter your phone number"
               />
               {errors.phone && (
@@ -364,9 +363,8 @@ const Register = () => {
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className={`mt-1 block w-full px-3 py-2 border ${
-                  errors.role ? 'border-red-300' : 'border-gray-300'
-                } bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                className={`mt-1 block w-full px-3 py-2 border ${errors.role ? 'border-red-300' : 'border-gray-300'
+                  } bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
               >
                 <option value="">Select a role</option>
                 <option value="student">Student</option>
@@ -383,46 +381,45 @@ const Register = () => {
             </div>
 
             {/* Organization Selection (for existing organizations) */}
-            {formData.role && 
-             formData.role !== 'admin' && 
-             formData.role !== 'new_university' && 
-             formData.role !== 'new_company' && (
-              <div>
-                <label htmlFor="organizationId" className="block text-sm font-medium text-gray-700">
-                  {formData.role === 'student' || formData.role === 'tpo' ? 'University' : 'Company'}
-                </label>
-                <select
-                  id="organizationId"
-                  name="organizationId"
-                  value={formData.organizationId}
-                  onChange={handleChange}
-                  className={`mt-1 block w-full px-3 py-2 border ${
-                    errors.organizationId ? 'border-red-300' : 'border-gray-300'
-                  } bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                >
-                  <option value="">Select an {formData.role === 'student' || formData.role === 'tpo' ? 'university' : 'company'}</option>
-                  {getFilteredOrganizations().length > 0 ? (
-                    getFilteredOrganizations().map((org) => (
-                      <option key={org.id} value={org.id}>
-                        {org.name}
+            {formData.role &&
+              formData.role !== 'admin' &&
+              formData.role !== 'new_university' &&
+              formData.role !== 'new_company' && (
+                <div>
+                  <label htmlFor="organizationId" className="block text-sm font-medium text-gray-700">
+                    {formData.role === 'student' || formData.role === 'tpo' ? 'University' : 'Company'}
+                  </label>
+                  <select
+                    id="organizationId"
+                    name="organizationId"
+                    value={formData.organizationId}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full px-3 py-2 border ${errors.organizationId ? 'border-red-300' : 'border-gray-300'
+                      } bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                  >
+                    <option value="">Select an {formData.role === 'student' || formData.role === 'tpo' ? 'university' : 'company'}</option>
+                    {getFilteredOrganizations().length > 0 ? (
+                      getFilteredOrganizations().map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        No {formData.role === 'student' || formData.role === 'tpo' ? 'universities' : 'companies'} available
                       </option>
-                    ))
-                  ) : (
-                    <option value="" disabled>
-                      No {formData.role === 'student' || formData.role === 'tpo' ? 'universities' : 'companies'} available
-                    </option>
+                    )}
+                  </select>
+                  {errors.organizationId && (
+                    <p className="mt-1 text-sm text-red-600">{errors.organizationId}</p>
                   )}
-                </select>
-                {errors.organizationId && (
-                  <p className="mt-1 text-sm text-red-600">{errors.organizationId}</p>
-                )}
-                {getFilteredOrganizations().length === 0 && formData.role && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    No approved {formData.role === 'student' || formData.role === 'tpo' ? 'universities' : 'companies'} are available. Please contact an administrator.
-                  </p>
-                )}
-              </div>
-            )}
+                  {getFilteredOrganizations().length === 0 && formData.role && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      No approved {formData.role === 'student' || formData.role === 'tpo' ? 'universities' : 'companies'} are available. Please contact an administrator.
+                    </p>
+                  )}
+                </div>
+              )}
 
             {/* Organization Creation Fields (for new organizations) */}
             {(formData.role === 'new_university' || formData.role === 'new_company') && (
@@ -432,7 +429,7 @@ const Register = () => {
                     <strong>Note:</strong> Your {formData.role === 'new_university' ? 'university' : 'company'} will be created with <strong>pending</strong> approval status. An admin will review and approve it before it becomes active.
                   </p>
                 </div>
-                
+
                 <div>
                   <label htmlFor="organizationName" className="block text-sm font-medium text-gray-700">
                     {formData.role === 'new_university' ? 'University' : 'Company'} Name <span className="text-red-500">*</span>
@@ -443,9 +440,8 @@ const Register = () => {
                     type="text"
                     value={formData.organizationName}
                     onChange={handleChange}
-                    className={`mt-1 block w-full px-3 py-2 border ${
-                      errors.organizationName ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    className={`mt-1 block w-full px-3 py-2 border ${errors.organizationName ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                     placeholder={`Enter ${formData.role === 'new_university' ? 'university' : 'company'} name`}
                     required
                   />
@@ -464,9 +460,8 @@ const Register = () => {
                     type="email"
                     value={formData.organizationDomain}
                     onChange={handleChange}
-                    className={`mt-1 block w-full px-3 py-2 border ${
-                      errors.organizationDomain ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    className={`mt-1 block w-full px-3 py-2 border ${errors.organizationDomain ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                     placeholder={`example@${formData.role === 'new_university' ? 'university.edu' : 'company.com'}`}
                     required
                   />
@@ -488,9 +483,8 @@ const Register = () => {
                     type="email"
                     value={formData.organizationContactEmail}
                     onChange={handleChange}
-                    className={`mt-1 block w-full px-3 py-2 border ${
-                      errors.organizationContactEmail ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    className={`mt-1 block w-full px-3 py-2 border ${errors.organizationContactEmail ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                     placeholder="contact@example.com"
                     required
                   />
@@ -509,9 +503,8 @@ const Register = () => {
                     type="tel"
                     value={formData.organizationContactPhone}
                     onChange={handleChange}
-                    className={`mt-1 block w-full px-3 py-2 border ${
-                      errors.organizationContactPhone ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    className={`mt-1 block w-full px-3 py-2 border ${errors.organizationContactPhone ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                     placeholder="+1-555-0100"
                   />
                   {errors.organizationContactPhone && (
@@ -529,9 +522,8 @@ const Register = () => {
                     type="url"
                     value={formData.organizationWebsite}
                     onChange={handleChange}
-                    className={`mt-1 block w-full px-3 py-2 border ${
-                      errors.organizationWebsite ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    className={`mt-1 block w-full px-3 py-2 border ${errors.organizationWebsite ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                     placeholder="https://example.com"
                   />
                   {errors.organizationWebsite && (
@@ -549,9 +541,8 @@ const Register = () => {
                     value={formData.organizationAddress}
                     onChange={handleChange}
                     rows="3"
-                    className={`mt-1 block w-full px-3 py-2 border ${
-                      errors.organizationAddress ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    className={`mt-1 block w-full px-3 py-2 border ${errors.organizationAddress ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                     placeholder="Enter full address"
                   />
                   {errors.organizationAddress && (
@@ -574,9 +565,8 @@ const Register = () => {
                   autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                  className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'
+                    } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                   placeholder="Create a password"
                 />
                 <button
@@ -609,9 +599,8 @@ const Register = () => {
                   autoComplete="new-password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${
-                    errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                  className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                    } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                   placeholder="Confirm your password"
                 />
                 <button

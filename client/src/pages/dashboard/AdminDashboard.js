@@ -626,7 +626,7 @@ const AdminDashboard = () => {
   // Render Overview Tab
   const renderOverviewTab = () => (
     <>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatCard
           title="Total Users"
           value={stats.users?.total || 0}
@@ -655,103 +655,103 @@ const AdminDashboard = () => {
           icon={DocumentTextIcon}
           color="orange"
         />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <ChartCard title="User Distribution">
-          <div className="space-y-4">
-            {stats.users?.byRole?.map((roleStat) => (
-              <div key={roleStat.role} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700 capitalize">
-                  {roleStat.role}
-                </span>
-                <div className="flex items-center">
-                  <span className="text-lg font-semibold text-gray-900 mr-3">
-                    {roleStat.count}
-                  </span>
-                  <div className="w-24 bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full"
-                      style={{
-                        width: `${(roleStat.count / stats.users.total) * 100}%`
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <ChartCard title="User Distribution">
+              <div className="space-y-4">
+            {stats.users?.byRole?.map((roleStat) => (
+                  <div key={roleStat.role} className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700 capitalize">
+                      {roleStat.role}
+                    </span>
+                    <div className="flex items-center">
+                      <span className="text-lg font-semibold text-gray-900 mr-3">
+                        {roleStat.count}
+                      </span>
+                      <div className="w-24 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full" 
+                          style={{ 
+                            width: `${(roleStat.count / stats.users.total) * 100}%` 
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
         </ChartCard>
 
         <ChartCard title="Job Status Distribution">
-          <div className="space-y-4">
+              <div className="space-y-4">
             {stats.jobs?.byStatus?.map((jobStat) => {
               const IconComponent = jobStat.status === 'active' ? CheckCircleIcon : 
                                    jobStat.status === 'closed' ? XCircleIcon : ExclamationTriangleIcon;
-              return (
-                <div key={jobStat.status} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <IconComponent className={`h-4 w-4 mr-2 ${getStatusColor(jobStat.status).split(' ')[0]}`} />
-                    <span className="text-sm font-medium text-gray-700 capitalize">
-                      {jobStat.status}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-lg font-semibold text-gray-900 mr-3">
-                      {jobStat.count}
-                    </span>
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-purple-600 h-2 rounded-full"
-                        style={{
-                          width: `${(jobStat.count / stats.jobs.total) * 100}%`
-                        }}
-                      ></div>
+                  return (
+                    <div key={jobStat.status} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <IconComponent className={`h-4 w-4 mr-2 ${getStatusColor(jobStat.status).split(' ')[0]}`} />
+                        <span className="text-sm font-medium text-gray-700 capitalize">
+                          {jobStat.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-lg font-semibold text-gray-900 mr-3">
+                          {jobStat.count}
+                        </span>
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-purple-600 h-2 rounded-full" 
+                            style={{ 
+                              width: `${(jobStat.count / stats.jobs.total) * 100}%` 
+                            }}
+                          ></div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
         </ChartCard>
-      </div>
+        </div>
 
       <ChartCard title="Recent Activity (Last 7 Days)">
-        {stats.recentActivity?.length > 0 ? (
-          <div className="space-y-4">
-            {stats.recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {activity.student?.firstName} {activity.student?.lastName}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Applied to {activity.job?.title} at {activity.job?.organization?.name}
-                    </p>
+            {stats.recentActivity?.length > 0 ? (
+              <div className="space-y-4">
+                {stats.recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {activity.student?.firstName} {activity.student?.lastName}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Applied to {activity.job?.title} at {activity.job?.organization?.name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">
+                        {new Date(activity.createdAt).toLocaleDateString()}
+                      </p>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
+                        {activity.status}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-500">
-                    {new Date(activity.createdAt).toLocaleDateString()}
-                  </p>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
-                    {activity.status}
-                  </span>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No recent activity</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Applications and activities will appear here.
-            </p>
-          </div>
-        )}
+            ) : (
+              <div className="text-center py-8">
+                <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No recent activity</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Applications and activities will appear here.
+                </p>
+              </div>
+            )}
       </ChartCard>
     </>
   );
@@ -806,7 +806,7 @@ const AdminDashboard = () => {
               <p className="text-center text-gray-500 py-8">No data available</p>
             )}
           </ChartCard>
-        </div>
+          </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <ChartCard title="Application Funnel">
@@ -1034,7 +1034,7 @@ const AdminDashboard = () => {
         >
           <form onSubmit={handleSaveUser} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
+                  <div>
                 <label className="block text-sm font-medium text-gray-700">First Name</label>
                 <input
                   type="text"
@@ -1043,7 +1043,7 @@ const AdminDashboard = () => {
                   onChange={(e) => setUserFormData(prev => ({ ...prev, firstName: e.target.value }))}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                 />
-              </div>
+                  </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Last Name</label>
                 <input
@@ -1053,7 +1053,7 @@ const AdminDashboard = () => {
                   onChange={(e) => setUserFormData(prev => ({ ...prev, lastName: e.target.value }))}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                 />
-              </div>
+                </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -1202,7 +1202,7 @@ const AdminDashboard = () => {
         >
           <form onSubmit={handleSaveTPO} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
+                  <div>
                 <label className="block text-sm font-medium text-gray-700">First Name</label>
                 <input
                   type="text"
@@ -1211,7 +1211,7 @@ const AdminDashboard = () => {
                   onChange={(e) => setTpoFormData(prev => ({ ...prev, firstName: e.target.value }))}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                 />
-              </div>
+                  </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Last Name</label>
                 <input
@@ -1221,7 +1221,7 @@ const AdminDashboard = () => {
                   onChange={(e) => setTpoFormData(prev => ({ ...prev, lastName: e.target.value }))}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                 />
-              </div>
+                </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -1387,7 +1387,7 @@ const AdminDashboard = () => {
           title={selectedUniversity ? 'Edit University' : 'Create University'}
         >
           <form onSubmit={handleSaveUniversity} className="space-y-4">
-            <div>
+                  <div>
               <label className="block text-sm font-medium text-gray-700">Name</label>
               <input
                 type="text"
@@ -1396,7 +1396,7 @@ const AdminDashboard = () => {
                 onChange={(e) => setUniversityFormData(prev => ({ ...prev, name: e.target.value }))}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               />
-            </div>
+                  </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Domain</label>
               <input
@@ -1407,7 +1407,7 @@ const AdminDashboard = () => {
                 onChange={(e) => setUniversityFormData(prev => ({ ...prev, domain: e.target.value }))}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               />
-            </div>
+                </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Contact Email</label>
               <input
@@ -1426,7 +1426,7 @@ const AdminDashboard = () => {
                 onChange={(e) => setUniversityFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               />
-            </div>
+          </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Website</label>
               <input
@@ -1435,7 +1435,7 @@ const AdminDashboard = () => {
                 onChange={(e) => setUniversityFormData(prev => ({ ...prev, website: e.target.value }))}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               />
-            </div>
+        </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Address</label>
               <textarea
@@ -1444,7 +1444,7 @@ const AdminDashboard = () => {
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                 rows="3"
               />
-            </div>
+      </div>
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
