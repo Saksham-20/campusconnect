@@ -15,6 +15,12 @@ Server Details:
                         INITIAL SETUP (One-time)
 ================================================================================
 
+NOTE: If you already have "campusconnect-server" running, rename it first:
+   pm2 delete campusconnect-server
+   cd /var/www/campusconnect/server
+   pm2 start src/server.js --name edumapping
+   pm2 save
+
 1. Connect to VPS:
    ssh root@178.16.138.82
 
@@ -47,7 +53,7 @@ Server Details:
 
 8. Start server with PM2:
    cd ../server
-   pm2 start src/server.js --name campusconnect-server
+   pm2 start src/server.js --name edumapping
    pm2 save
    pm2 startup
 
@@ -115,13 +121,13 @@ Verify build was created:
 STEP 9: Restart PM2 process
 ----------------------------------------------
 cd ../server
-pm2 restart campusconnect-server
+pm2 restart edumapping
 
 
 STEP 10: Check server status and logs
 ----------------------------------------------
 pm2 status
-pm2 logs campusconnect-server --lines 30
+pm2 logs edumapping --lines 30
 
 
 STEP 11: Restart Nginx (if using reverse proxy)
@@ -149,8 +155,8 @@ cp client/.env client/.env.backup 2>/dev/null || true && \
 git pull origin main && \
 cd server && npm install --production && npx sequelize-cli db:migrate && \
 cd ../client && rm -rf build && npm install --production && npm run build && \
-cd ../server && pm2 restart campusconnect-server && \
-pm2 logs campusconnect-server --lines 20
+cd ../server && pm2 restart edumapping && \
+pm2 logs edumapping --lines 20
 
 
 ================================================================================
@@ -161,18 +167,18 @@ Check PM2 status:
    pm2 status
 
 View PM2 logs:
-   pm2 logs campusconnect-server
-   pm2 logs campusconnect-server --lines 50
-   pm2 logs campusconnect-server --err
+   pm2 logs edumapping
+   pm2 logs edumapping --lines 50
+   pm2 logs edumapping --err
 
 Restart PM2 process:
-   pm2 restart campusconnect-server
+   pm2 restart edumapping
 
 Stop PM2 process:
-   pm2 stop campusconnect-server
+   pm2 stop edumapping
 
 Delete PM2 process:
-   pm2 delete campusconnect-server
+   pm2 delete edumapping
 
 Check if server is running on port:
    netstat -tulpn | grep :5000
@@ -209,21 +215,21 @@ List all processes:
 
 View logs:
    pm2 logs
-   pm2 logs campusconnect-server
-   pm2 logs campusconnect-server --lines 100
+   pm2 logs edumapping
+   pm2 logs edumapping --lines 100
 
 Restart process:
-   pm2 restart campusconnect-server
+   pm2 restart edumapping
    pm2 restart all
 
 Stop process:
-   pm2 stop campusconnect-server
+   pm2 stop edumapping
 
 Start process:
-   pm2 start campusconnect-server
+   pm2 start edumapping
 
 Delete process:
-   pm2 delete campusconnect-server
+   pm2 delete edumapping
 
 Save process list:
    pm2 save
@@ -311,12 +317,12 @@ ISSUE: "fatal: not a git repository"
 SOLUTION: Run git init and add remote (see Initial Setup)
 
 ISSUE: "PM2 process not found"
-SOLUTION: Start process with: pm2 start src/server.js --name campusconnect-server
+SOLUTION: Start process with: pm2 start src/server.js --name edumapping
 
 ISSUE: "Changes not showing on website"
 SOLUTION: 
    1. Rebuild frontend: cd client && rm -rf build && npm run build
-   2. Restart PM2: pm2 restart campusconnect-server
+   2. Restart PM2: pm2 restart edumapping
    3. Restart Nginx: sudo systemctl restart nginx
    4. Clear browser cache: Ctrl + Shift + R
 
@@ -375,16 +381,16 @@ After deployment:
 cd /var/www/campusconnect && git pull origin main && \
 cd server && npm install --production && npx sequelize-cli db:migrate && \
 cd ../client && rm -rf build && npm install --production && npm run build && \
-cd ../server && pm2 restart campusconnect-server
+cd ../server && pm2 restart edumapping
 
 # Check status
-pm2 status && pm2 logs campusconnect-server --lines 20
+pm2 status && pm2 logs edumapping --lines 20
 
 # Restart everything
-pm2 restart campusconnect-server && sudo systemctl restart nginx
+pm2 restart edumapping && sudo systemctl restart nginx
 
 # View logs
-pm2 logs campusconnect-server --lines 50
+pm2 logs edumapping --lines 50
 
 
 ================================================================================

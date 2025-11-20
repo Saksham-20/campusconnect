@@ -305,33 +305,206 @@ const LandingPage = () => {
 
   const renderFeaturesPage = () => (
     <div className="pt-20">
-      <section className="bg-[#156395] text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold mb-4">Features</h1>
-          <p className="text-xl text-blue-100">Comprehensive tools for modern campus management</p>
+      {/* Features Hero */}
+      <section className="relative py-20 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-green-50">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#FF9933]/10 via-white/50 to-[#138808]/10 z-0" />
+        <div className="container mx-auto px-4 relative z-10 text-center">
+          <motion.h1
+            className="text-5xl font-bold mb-6 text-gray-900"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            Powerful Features for <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] to-[#138808]">
+              Modern Campus Management
+            </span>
+          </motion.h1>
+          <motion.p
+            className="text-xl text-gray-600 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            Everything you need to streamline placement processes and enhance student employability.
+          </motion.p>
         </div>
       </section>
-      {/* ... Content ... */}
-      <div className="container mx-auto px-4 py-12">
-        <p className="text-center text-gray-600">Detailed feature list coming soon...</p>
-      </div>
+
+      {/* Features Grid */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: "📊",
+                title: "Advanced Analytics",
+                desc: "Real-time insights into placement trends, student performance, and recruiter engagement.",
+                color: "from-orange-400 to-orange-600"
+              },
+              {
+                icon: "🤝",
+                title: "Recruiter Connect",
+                desc: "Seamless communication channel between TPOs and recruiters for efficient drive management.",
+                color: "from-blue-400 to-blue-600"
+              },
+              {
+                icon: "📝",
+                title: "Resume Builder",
+                desc: "AI-powered resume builder helping students create ATS-friendly professional resumes.",
+                color: "from-green-400 to-green-600"
+              },
+              {
+                icon: "🎯",
+                title: "Skill Assessment",
+                desc: "Integrated assessment tools to evaluate and improve student employability skills.",
+                color: "from-purple-400 to-purple-600"
+              },
+              {
+                icon: "📅",
+                title: "Drive Management",
+                desc: "End-to-end automation of placement drives, from scheduling to offer letter generation.",
+                color: "from-pink-400 to-pink-600"
+              },
+              {
+                icon: "📱",
+                title: "Mobile Ready",
+                desc: "Fully responsive design ensuring access to critical features on any device, anywhere.",
+                color: "from-teal-400 to-teal-600"
+              }
+            ].map((feature, idx) => (
+              <motion.div
+                key={idx}
+                className="relative group p-8 rounded-3xl border border-gray-100 bg-white shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                whileHover={{ y: -10 }}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                <div className="relative z-10">
+                  <div className="text-5xl mb-6 transform group-hover:scale-110 transition-transform duration-300">{feature.icon}</div>
+                  <h3 className="text-2xl font-bold mb-4 text-gray-900 group-hover:text-[#FF9933] transition-colors">{feature.title}</h3>
+                  <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 
   const renderAboutPage = () => (
     <div className="pt-20">
-      <section className="bg-[#156395] text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold mb-4">About EduMapping</h1>
-          <p className="text-xl text-blue-100">Making youth job-ready</p>
+      {/* About Hero */}
+      <section className="relative py-24 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-green-50">
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.span
+              className="inline-block py-1 px-3 rounded-full bg-orange-100 text-[#FF9933] font-semibold text-sm mb-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+            >
+              Our Story
+            </motion.span>
+            <motion.h1
+              className="text-5xl lg:text-6xl font-bold mb-8 text-gray-900"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              Bridging the Gap Between <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] to-[#138808]">
+                Education & Employment
+              </span>
+            </motion.h1>
+            <motion.p
+              className="text-xl text-gray-600 leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              EduMapping is dedicated to transforming the placement landscape by empowering students with skills and connecting institutions with top-tier opportunities.
+            </motion.p>
+          </div>
         </div>
       </section>
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <div className="prose lg:prose-xl mx-auto">
-          <p>Our objective is to make youth job-ready with essential employability skills.</p>
-          {/* ... */}
+
+      {/* Mission & Vision */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <motion.div
+              className="relative rounded-3xl overflow-hidden shadow-2xl"
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-[#FF9933]/20 to-[#138808]/20 mix-blend-overlay z-10" />
+              <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Team collaboration" className="w-full h-full object-cover" />
+            </motion.div>
+
+            <div className="space-y-12">
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center text-3xl mb-6 text-[#FF9933]">🚀</div>
+                <h3 className="text-3xl font-bold mb-4 text-gray-900">Our Mission</h3>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  To democratize access to career opportunities by providing cutting-edge technology solutions that streamline the placement process and enhance student employability through data-driven insights.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center text-3xl mb-6 text-[#138808]">👁️</div>
+                <h3 className="text-3xl font-bold mb-4 text-gray-900">Our Vision</h3>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  To be the global standard for campus placements, creating a world where every student has the opportunity to find their dream career based on their skills and potential.
+                </p>
+              </motion.div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Values */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-16 text-gray-900">Our Core Values</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { title: "Innovation", desc: "Constantly pushing boundaries to solve complex problems.", color: "bg-blue-50 text-blue-600" },
+              { title: "Integrity", desc: "Building trust through transparency and honest practices.", color: "bg-orange-50 text-orange-600" },
+              { title: "Impact", desc: "Measuring success by the careers we help launch.", color: "bg-green-50 text-green-600" }
+            ].map((value, idx) => (
+              <motion.div
+                key={idx}
+                className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all"
+                whileHover={{ y: -10 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                <div className={`w-20 h-20 mx-auto rounded-full ${value.color} flex items-center justify-center text-3xl mb-6`}>
+                  {value.title[0]}
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-900">{value.title}</h3>
+                <p className="text-gray-600">{value.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 
