@@ -28,6 +28,7 @@ import Events from './pages/events/Events';
 import EventForm from './pages/events/EventForm';
 
 import './styles/index.css';
+import './styles/carousel.css';
 
 // Dashboard router component to redirect based on user role
 const DashboardRouter = () => {

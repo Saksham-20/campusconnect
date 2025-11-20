@@ -4,9 +4,9 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import NotificationPanel from './NotificationPanel';
-import { 
-  BellIcon, 
-  UserCircleIcon, 
+import {
+  BellIcon,
+  UserCircleIcon,
   ChevronDownIcon,
   MagnifyingGlassIcon,
   Bars3Icon,
@@ -58,21 +58,21 @@ const Header = () => {
 
   const getNavigationItems = () => {
     const baseItems = [
-      { 
-        name: 'Dashboard', 
-        href: '/dashboard', 
+      {
+        name: 'Dashboard',
+        href: '/dashboard',
         current: location.pathname === '/dashboard',
         icon: HomeIcon
       },
-      { 
-        name: 'Jobs', 
-        href: '/jobs', 
+      {
+        name: 'Jobs',
+        href: '/jobs',
         current: location.pathname.startsWith('/jobs'),
         icon: BriefcaseIcon
       },
-      { 
-        name: 'Events', 
-        href: '/events', 
+      {
+        name: 'Events',
+        href: '/events',
         current: location.pathname.startsWith('/events'),
         icon: CalendarIcon
       }
@@ -80,15 +80,15 @@ const Header = () => {
 
     if (user?.role === 'student') {
       baseItems.push(
-        { 
-          name: 'Applications', 
-          href: '/applications', 
+        {
+          name: 'Applications',
+          href: '/applications',
           current: location.pathname === '/applications',
           icon: DocumentTextIcon
         },
-        { 
-          name: 'Resume', 
-          href: '/resume', 
+        {
+          name: 'Resume',
+          href: '/resume',
           current: location.pathname === '/resume',
           icon: DocumentTextIcon
         }
@@ -97,15 +97,15 @@ const Header = () => {
 
     if (user?.role === 'recruiter' || user?.role === 'tpo') {
       baseItems.push(
-        { 
-          name: 'Post Job', 
-          href: '/jobs/new', 
+        {
+          name: 'Post Job',
+          href: '/jobs/new',
           current: location.pathname === '/jobs/new',
           icon: BriefcaseIcon
         },
-        { 
-          name: 'Applications', 
-          href: '/applications', 
+        {
+          name: 'Applications',
+          href: '/applications',
           current: location.pathname === '/applications',
           icon: DocumentTextIcon
         }
@@ -127,22 +127,26 @@ const Header = () => {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200' 
-          : 'bg-white shadow-sm border-b border-gray-200'
-      }`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+        ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200'
+        : 'bg-white shadow-sm border-b border-gray-200'
+        }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo and Brand */}
             <div className="flex items-center">
-              <Link to="/" className="flex items-center group">
-                <img 
-                  src="/logo-cropped.svg" 
-                  alt="Logo" 
-                  className="w-auto transition-transform duration-200 group-hover:scale-110"
+              <Link to="/" className="flex flex-col items-start group">
+                <img
+                  src="/logo.svg"
+                  alt="Logo"
+                  className="w-auto transition-transform duration-200 group-hover:scale-105"
                   style={{ height: '50px', filter: 'none' }}
                 />
+                {user?.role === 'tpo' && (
+                  <span className="text-[10px] font-semibold text-[#156395] ml-1 -mt-1">
+                    Brand by eTraze
+                  </span>
+                )}
               </Link>
             </div>
 
@@ -154,11 +158,10 @@ const Header = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      item.current
-                        ? 'text-primary-600 bg-primary-50 border border-primary-200 shadow-sm'
-                        : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50 hover:border hover:border-primary-200'
-                    }`}
+                    className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${item.current
+                      ? 'text-primary-600 bg-primary-50 border border-primary-200 shadow-sm'
+                      : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50 hover:border hover:border-primary-200'
+                      }`}
                   >
                     <IconComponent className="h-4 w-4 mr-2" />
                     {item.name}
@@ -354,11 +357,10 @@ const Header = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`flex items-center px-3 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
-                        item.current
-                          ? 'text-primary-600 bg-primary-50 border border-primary-200'
-                          : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'
-                      }`}
+                      className={`flex items-center px-3 py-3 rounded-lg text-base font-medium transition-all duration-200 ${item.current
+                        ? 'text-primary-600 bg-primary-50 border border-primary-200'
+                        : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'
+                        }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <IconComponent className="h-5 w-5 mr-3" />
@@ -384,7 +386,7 @@ const Header = () => {
       <div className="h-16"></div>
 
       {/* Notification Panel */}
-      <NotificationPanel 
+      <NotificationPanel
         isOpen={isNotificationPanelOpen}
         onClose={() => setIsNotificationPanelOpen(false)}
       />
