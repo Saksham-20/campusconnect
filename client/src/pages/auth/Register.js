@@ -239,7 +239,7 @@ const Register = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           {/* Logo */}
-          <div className="flex flex-col items-center justify-center">
+          <Link to="/" className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity">
             <img
               src="/logo.svg"
               alt="EduMapping Logo"
@@ -248,7 +248,7 @@ const Register = () => {
             <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#FF9933] to-[#138808] drop-shadow-sm">
               EduMapping
             </span>
-          </div>
+          </Link>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
           </h2>

@@ -618,6 +618,7 @@ const LandingPage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
             >
+              <h3 className="text-2xl font-bold mb-6 text-gray-900">Contact EduMapping</h3>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
@@ -627,7 +628,7 @@ const LandingPage = () => {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF9933] focus:border-transparent outline-none transition-all"
                     required
-                    placeholder="John Doe"
+                    placeholder="Your full name"
                   />
                 </div>
                 <div>
@@ -638,7 +639,7 @@ const LandingPage = () => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF9933] focus:border-transparent outline-none transition-all"
                     required
-                    placeholder="john@example.com"
+                    placeholder="your.email@example.com"
                   />
                 </div>
                 <div>
@@ -768,7 +769,12 @@ const LandingPage = () => {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex flex-col items-start mb-6">
-                <img src="/logo.svg" alt="EduMapping" className="h-10 mb-2" />
+                <div className="flex items-center gap-2 mb-2">
+                  <img src="/logo.svg" alt="EduMapping" className="h-10" />
+                  <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] to-[#138808]">
+                    EduMapping
+                  </span>
+                </div>
                 <span className="text-xs text-gray-400 font-medium">Nurturing Young Minds</span>
               </div>
               <p className="mb-4 max-w-sm">Making youth job-ready with essential employability skills.</p>
