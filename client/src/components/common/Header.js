@@ -136,14 +136,19 @@ const Header = () => {
             {/* Logo and Brand */}
             <div className="flex items-center">
               <Link to="/" className="flex flex-col items-start group">
-                <img
-                  src="/logo.svg"
-                  alt="Logo"
-                  className="w-auto transition-transform duration-200 group-hover:scale-105"
-                  style={{ height: '50px', filter: 'none' }}
-                />
+                <div className="flex items-center">
+                  <img
+                    src="/logo.svg"
+                    alt="Logo"
+                    className="w-auto transition-transform duration-200 group-hover:scale-105"
+                    style={{ height: '50px', filter: 'none' }}
+                  />
+                </div>
+                <span className="text-[10px] font-semibold text-[#156395] ml-1 -mt-1">
+                  Nurturing Young Minds
+                </span>
                 {user?.role === 'tpo' && (
-                  <span className="text-[10px] font-semibold text-[#156395] ml-1 -mt-1">
+                  <span className="text-[9px] font-medium text-gray-500 ml-1">
                     Brand by eTraze
                   </span>
                 )}

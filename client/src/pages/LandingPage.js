@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Slider from 'react-slick';
+import WhatsAppChat from '../components/common/WhatsAppChat';
 import './LandingPage.css';
 
 // Carousel Settings
@@ -97,7 +98,7 @@ const LandingPage = () => {
                 className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0"
                 variants={fadeInUp}
               >
-                Nurturing Young Minds. Our Objective: To make youth Job Ready with essential Employability Skills.
+                Where learning meets limitless possibilities
               </motion.p>
 
               <motion.div
@@ -171,7 +172,7 @@ const LandingPage = () => {
                       <div className="relative z-10 text-center p-8 max-w-md mx-auto">
                         <h3 className="text-4xl font-bold mb-4 tracking-tight text-gray-800 drop-shadow-sm">Skill Development</h3>
                         <p className="text-gray-700 text-xl leading-relaxed font-medium">
-                          Master essential workplace skills through our comprehensive training modules.
+                          Preparing the next generation of creators & Innovators
                         </p>
                       </div>
                     </div>
@@ -291,7 +292,7 @@ const LandingPage = () => {
                 onClick={() => handlePageChange('contact')}
                 className="px-8 py-4 bg-white text-[#138808] border-2 border-[#138808] rounded-full font-bold hover:bg-green-50 transition-all transform hover:-translate-y-1"
               >
-                Contact Us
+                Connect with Us
               </button>
             </div>
           </motion.div>
@@ -587,6 +588,27 @@ const LandingPage = () => {
                 <h3 className="text-xl font-bold mb-2 text-gray-900">Call Us</h3>
                 <p className="text-gray-600">+91 9104991059<br />Mon - Fri, 9am - 6pm</p>
               </motion.div>
+
+              <motion.div
+                className="p-8 rounded-3xl bg-white shadow-lg border border-gray-100"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-2xl mb-4 text-purple-600">📍</div>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">Meet Us</h3>
+                <p className="text-gray-600 mb-4">
+                  EduMapping Office<br />
+                  India
+                </p>
+                <div className="flex justify-center">
+                  <img 
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://maps.google.com/?q=EduMapping+Office+India" 
+                    alt="Location QR Code" 
+                    className="w-32 h-32 border border-gray-200 rounded-lg"
+                  />
+                </div>
+              </motion.div>
             </div>
 
             {/* Contact Form */}
@@ -658,19 +680,22 @@ const LandingPage = () => {
       <nav className={`fixed w-full z-50 transition-all duration-300 ${currentPage === 'home' ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-white shadow-sm'}`}>
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-20">
-            <button onClick={() => handlePageChange('home')} className="flex items-center gap-2">
-              <img src="/logo.svg" alt="EduMapping" className="h-12 w-auto" />
-              <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] to-[#138808] drop-shadow-sm">
-                EduMapping
-              </span>
+            <button onClick={() => handlePageChange('home')} className="flex flex-col items-start gap-1">
+              <div className="flex items-center gap-2">
+                <img src="/logo.svg" alt="EduMapping" className="h-12 w-auto" />
+                <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] to-[#138808] drop-shadow-sm">
+                  EduMapping
+                </span>
+              </div>
+              <span className="text-xs text-gray-600 font-medium ml-14">Nurturing Young Minds</span>
             </button>
 
             <div className="hidden md:flex items-center gap-8">
-              {['Home', 'Features', 'About', 'Contact'].map((item) => (
+              {['Home', 'Features', 'About', 'Connect with Us'].map((item) => (
                 <button
                   key={item}
-                  onClick={() => handlePageChange(item.toLowerCase())}
-                  className={`text-sm font-medium hover:text-[#FF9933] transition-colors ${currentPage === item.toLowerCase() ? 'text-[#FF9933]' : 'text-gray-600'}`}
+                  onClick={() => handlePageChange(item === 'Connect with Us' ? 'contact' : item.toLowerCase())}
+                  className={`text-sm font-medium hover:text-[#FF9933] transition-colors ${currentPage === (item === 'Connect with Us' ? 'contact' : item.toLowerCase()) ? 'text-[#FF9933]' : 'text-gray-600'}`}
                 >
                   {item}
                 </button>
@@ -703,10 +728,10 @@ const LandingPage = () => {
               className="md:hidden bg-white border-t"
             >
               <div className="flex flex-col p-4 gap-4">
-                {['Home', 'Features', 'About', 'Contact'].map((item) => (
+                {['Home', 'Features', 'About', 'Connect with Us'].map((item) => (
                   <button
                     key={item}
-                    onClick={() => handlePageChange(item.toLowerCase())}
+                    onClick={() => handlePageChange(item === 'Connect with Us' ? 'contact' : item.toLowerCase())}
                     className="text-left py-2 text-gray-600 font-medium"
                   >
                     {item}
@@ -734,12 +759,18 @@ const LandingPage = () => {
         {currentPage === 'contact' && <ContactSection />}
       </main>
 
+      {/* WhatsApp Chat Button */}
+      <WhatsAppChat />
+
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-12">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div className="col-span-1 md:col-span-2">
-              <img src="/logo.svg" alt="EduMapping" className="h-10 mb-6" />
+              <div className="flex flex-col items-start mb-6">
+                <img src="/logo.svg" alt="EduMapping" className="h-10 mb-2" />
+                <span className="text-xs text-gray-400 font-medium">Nurturing Young Minds</span>
+              </div>
               <p className="mb-4 max-w-sm">Making youth job-ready with essential employability skills.</p>
               <p className="text-sm text-gray-500">
                 Brand by <span className="text-[#FF9933]">eTraze</span>
@@ -748,9 +779,9 @@ const LandingPage = () => {
             <div>
               <h3 className="text-white font-bold mb-4">Quick Links</h3>
               <ul className="space-y-2">
-                {['Home', 'Features', 'About', 'Contact'].map((item) => (
+                {['Home', 'Features', 'About', 'Connect with Us'].map((item) => (
                   <li key={item}>
-                    <button onClick={() => handlePageChange(item.toLowerCase())} className="hover:text-white transition-colors">
+                    <button onClick={() => handlePageChange(item === 'Connect with Us' ? 'contact' : item.toLowerCase())} className="hover:text-white transition-colors">
                       {item}
                     </button>
                   </li>
@@ -767,7 +798,7 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>&copy; 2024 EduMapping. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} EduMapping. All rights reserved. | <Link to="/privacy" className="hover:text-white underline">Privacy Policy</Link></p>
             <p className="text-sm">Developed by <span className="text-white font-medium">Globoniks</span></p>
           </div>
         </div>

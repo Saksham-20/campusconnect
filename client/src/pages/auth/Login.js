@@ -4,6 +4,148 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
+
+// Enquiry Form Component
+const EnquiryForm = () => {
+  const [enquiryData, setEnquiryData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    city: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
+  const handleEnquiryChange = (e) => {
+    const { name, value } = e.target;
+    setEnquiryData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleEnquirySubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Send enquiry data to backend or email service
+      const subject = `New Enquiry from ${enquiryData.name}`;
+      const body = `Name: ${enquiryData.name}\nPhone: ${enquiryData.phone}\nEmail: ${enquiryData.email}\nCity: ${enquiryData.city}`;
+      
+      // You can either use an API endpoint or mailto link
+      window.location.href = `mailto:hello@edumapping.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      
+      toast.success('Thank you for your enquiry! We will get back to you soon.');
+      setEnquiryData({ name: '', phone: '', email: '', city: '' });
+      setShowForm(false);
+    } catch (error) {
+      toast.error('Failed to submit enquiry. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!showForm) {
+    return (
+      <button
+        type="button"
+        onClick={() => setShowForm(true)}
+        className="w-full py-2 px-4 border-2 border-primary-500 text-primary-600 rounded-md font-medium hover:bg-primary-50 transition-colors"
+      >
+        Fill Enquiry Form
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={handleEnquirySubmit} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4">
+        <div>
+          <label htmlFor="enquiry-name" className="block text-sm font-medium text-gray-700 mb-1">
+            Name *
+          </label>
+          <input
+            id="enquiry-name"
+            name="name"
+            type="text"
+            required
+            value={enquiryData.name}
+            onChange={handleEnquiryChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder="Your full name"
+          />
+        </div>
+        <div>
+          <label htmlFor="enquiry-phone" className="block text-sm font-medium text-gray-700 mb-1">
+            Phone *
+          </label>
+          <input
+            id="enquiry-phone"
+            name="phone"
+            type="tel"
+            required
+            value={enquiryData.phone}
+            onChange={handleEnquiryChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder="+91 1234567890"
+          />
+        </div>
+        <div>
+          <label htmlFor="enquiry-email" className="block text-sm font-medium text-gray-700 mb-1">
+            Email *
+          </label>
+          <input
+            id="enquiry-email"
+            name="email"
+            type="email"
+            required
+            value={enquiryData.email}
+            onChange={handleEnquiryChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder="your.email@example.com"
+          />
+        </div>
+        <div>
+          <label htmlFor="enquiry-city" className="block text-sm font-medium text-gray-700 mb-1">
+            City *
+          </label>
+          <input
+            id="enquiry-city"
+            name="city"
+            type="text"
+            required
+            value={enquiryData.city}
+            onChange={handleEnquiryChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder="Your city"
+          />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 py-2 px-4 bg-primary-500 text-white rounded-md font-medium hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit Enquiry'}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setShowForm(false);
+            setEnquiryData({ name: '', phone: '', email: '', city: '' });
+          }}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+};
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -104,11 +246,12 @@ const Login = () => {
             <img
               src="/logo.svg"
               alt="EduMapping Logo"
-              className="h-20 w-auto mb-4"
+              className="h-20 w-auto mb-2"
             />
             <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#FF9933] to-[#138808] drop-shadow-sm">
               EduMapping
             </span>
+            <span className="text-xs text-gray-500 font-medium mt-1">Nurturing Young Minds</span>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
@@ -195,6 +338,14 @@ const Login = () => {
                 Forgot your password?
               </Link>
             </div>
+          </div>
+
+          {/* Enquiry Form Section */}
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <p className="text-center text-sm text-gray-600 mb-4">
+              Interested in learning more? Fill out our enquiry form
+            </p>
+            <EnquiryForm />
           </div>
 
           <div>

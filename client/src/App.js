@@ -6,12 +6,14 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'; // Add useAuth i
 import { NotificationProvider } from './contexts/NotificationContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Header from './components/common/Header';
+import WhatsAppChat from './components/common/WhatsAppChat';
 
 // Import pages
 import LandingPage from './pages/LandingPage';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import PendingApproval from './pages/auth/PendingApproval';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import StudentDashboard from './pages/dashboard/StudentDashboard';
 import RecruiterDashboard from './pages/dashboard/RecruiterDashboard';
 import TPODashboard from './pages/dashboard/TPODashboard';
@@ -119,6 +121,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/pending-approval" element={<PendingApproval />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
               
               {/* Protected routes */}
               <Route path="/dashboard" element={
@@ -215,6 +218,9 @@ function App() {
               {/* Catch all route */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            
+            {/* WhatsApp Chat Button - appears on all pages */}
+            <WhatsAppChat />
           </div>
         </Router>
       </NotificationProvider>
