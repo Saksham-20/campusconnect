@@ -21,7 +21,13 @@ const errorHandler = (err, req, res, next) => {
     const field = err.errors?.[0]?.path || constraintName;
     
     // Handle primary key constraint errors (sequence issues)
-    if (constraintName === 'organizations_pkey' || constraintName.includes('_pkey')) {
+    if (constraintName === 'organizations_pkey' || constraintName === 'users_pkey' || constraintName.includes('_pkey')) {
+      console.error('⚠️  Primary key constraint error detected - sequence may be out of sync:', {
+        constraint: constraintName,
+        detail: err.parent?.detail,
+        code: err.parent?.code,
+        message: 'This usually indicates the auto-increment sequence needs to be reset'
+      });
       return res.status(500).json({
         error: 'Database Error',
         message: 'A database error occurred. Please try again or contact support if the problem persists.'
